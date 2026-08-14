@@ -261,11 +261,32 @@ if (typeof window !== "undefined") {
   captureTelegramInitData();
 }
 
+function requestWelcome() {
+  void (async () => {
+    let initData = getTelegramInitData();
+    for (let attempt = 0; attempt < 20 && !initData.includes("hash="); attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 100));
+      initData = getTelegramInitData() || initData;
+    }
+    if (!initData.includes("hash=")) {
+      return;
+    }
+    await fetch("/api/telegram/welcome", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ telegramInitData: initData }),
+    }).catch(() => undefined);
+  })();
+}
+
 export function TelegramInit() {
   useEffect(() => {
     captureShopSession();
     captureTelegramInitData();
-    if (bootTelegram()) {
+    bootTelegram();
+    requestWelcome();
+
+    if (window.Telegram?.WebApp) {
       return;
     }
 
@@ -273,22 +294,25 @@ export function TelegramInit() {
       'script[src*="telegram-web-app.js"]'
     );
     if (existing) {
-      existing.addEventListener("load", () => bootTelegram());
-      const waitForInjected = window.setTimeout(() => bootTelegram(), 400);
-      return () => window.clearTimeout(waitForInjected);
+      existing.addEventListener("load", () => {
+        bootTelegram();
+        requestWelcome();
+      });
+      return;
     }
 
     const waitForInjected = window.setTimeout(() => {
       if (bootTelegram()) {
-        return;
-      }
-      if (getTelegramUser()) {
+        requestWelcome();
         return;
       }
       const script = document.createElement("script");
       script.src = "https://telegram.org/js/telegram-web-app.js";
       script.async = true;
-      script.onload = () => bootTelegram();
+      script.onload = () => {
+        bootTelegram();
+        requestWelcome();
+      };
       document.head.appendChild(script);
     }, 400);
 

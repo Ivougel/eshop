@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { startKeyboard, startMessageHtml } from "@/data/bot-start";
 import { rememberChat } from "@/lib/chats";
 import { runtimeEnv } from "@/lib/env";
-import { appUrlFrom, telegramCall } from "@/lib/telegram";
+import { appUrlFrom } from "@/lib/telegram";
+import { sendWelcome } from "@/lib/welcome";
 
 type TelegramUpdate = {
   message?: {
@@ -11,16 +11,6 @@ type TelegramUpdate = {
     from?: { id?: number; username?: string };
   };
 };
-
-async function sendStartMessage(token: string, chatId: number, webAppUrl: string) {
-  await telegramCall(token, "sendMessage", {
-    chat_id: chatId,
-    text: startMessageHtml(),
-    parse_mode: "HTML",
-    disable_web_page_preview: true,
-    reply_markup: startKeyboard(webAppUrl),
-  });
-}
 
 export async function POST(request: Request) {
   try {
@@ -45,7 +35,10 @@ export async function POST(request: Request) {
     }
 
     if (token && chatId && text.startsWith("/start")) {
-      await sendStartMessage(token, chatId, appUrlFrom(request));
+      const sent = await sendWelcome(token, chatId, appUrlFrom(request));
+      if (!sent) {
+        return NextResponse.json({ ok: false }, { status: 502 });
+      }
     }
 
     return NextResponse.json({ ok: true });
