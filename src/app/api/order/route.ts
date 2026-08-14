@@ -9,7 +9,7 @@ import {
 } from "@/lib/orders";
 import { chatIdByUserId } from "@/lib/chats";
 import { verifyShopSession } from "@/lib/session";
-import { appUrlFrom, telegramCall } from "@/lib/telegram";
+import { appUrlFrom, telegramCallRetry } from "@/lib/telegram";
 
 type OrderBody = {
   platform?: unknown;
@@ -110,19 +110,32 @@ export async function POST(request: Request) {
 
   const order = createOrder(chatId, priceRub);
   const payUrl = payUrlFor(baseUrl, order);
-  const delivered = await telegramCall(token, "sendMessage", {
+  const payload = {
     chat_id: chatId,
     text: orderMessageHtml(order.id, priceRub, botUsername),
     parse_mode: "HTML",
+    disable_web_page_preview: true,
     reply_markup: payKeyboard(payUrl, order.id),
-  });
+  };
+  let delivered = await telegramCallRetry(token, "sendMessage", payload);
+
+  if (!delivered.ok && /BUTTON_URL|can't parse entities/i.test(delivered.error ?? "")) {
+    delivered = await telegramCallRetry(token, "sendMessage", {
+      chat_id: chatId,
+      text: `${orderMessageHtml(order.id, priceRub, botUsername)}\n\n${payUrl}`,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    });
+  }
 
   if (!delivered.ok) {
+    const flood = delivered.errorCode === 429 || /too many requests/i.test(delivered.error ?? "");
     return NextResponse.json(
       {
         success: false,
-        error:
-          "Не удалось отправить заказ. Напишите боту /start и попробуйте снова.",
+        error: flood
+          ? "Telegram временно ограничил отправку. Подождите пару секунд и нажмите «Оплатить» ещё раз."
+          : "Не удалось отправить заказ. Напишите боту /start и попробуйте снова.",
       },
       { status: 502 }
     );

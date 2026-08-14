@@ -58,10 +58,8 @@ export function orderMessageHtml(orderId: number, priceRub: number, bot: string)
 export function payKeyboard(payUrl: string, orderId: number) {
   return {
     inline_keyboard: [
-      [
-        { text: "💳 Оплатить", url: payUrl },
-        { text: "🔄 Обновить", callback_data: `refresh:${orderId}` },
-      ],
+      [{ text: "💳 Оплатить", url: payUrl }],
+      [{ text: "🔄 Обновить", callback_data: `refresh:${orderId}` }],
     ],
   };
 }
