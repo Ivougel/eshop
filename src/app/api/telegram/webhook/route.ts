@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { startKeyboard, startMessageHtml } from "@/data/bot-start";
 import { rememberChat } from "@/lib/chats";
 import { runtimeEnv } from "@/lib/env";
 import { payKeyboard, payUrlFor, refreshOrderLink } from "@/lib/orders";
@@ -24,17 +25,10 @@ type TelegramUpdate = {
 async function sendStartMessage(token: string, chatId: number, webAppUrl: string) {
   await telegramCall(token, "sendMessage", {
     chat_id: chatId,
-    text: [
-      "Добро пожаловать в iCity e-shop.",
-      "",
-      "Нажмите «Открыть магазин», выберите товар и оплатите.",
-      "Счёт придёт сюда, в этот чат.",
-    ].join("\n"),
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: "Открыть магазин", web_app: { url: webAppUrl } }],
-      ],
-    },
+    text: startMessageHtml(),
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    reply_markup: startKeyboard(webAppUrl),
   });
 }
 

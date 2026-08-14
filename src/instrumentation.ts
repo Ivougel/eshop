@@ -1,3 +1,5 @@
+import { botDescription, botShortDescription } from "@/data/bot-start";
+
 export async function register() {
   if (process.env.NEXT_RUNTIME && process.env.NEXT_RUNTIME !== "nodejs") {
     return;
@@ -12,20 +14,31 @@ export async function register() {
   }
 
   const api = `https://api.telegram.org/bot${token}`;
-  await fetch(`${api}/setWebhook`, {
+  const json = (body: Record<string, unknown>) => ({
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: `${appUrl}/api/telegram/webhook` }),
-  }).catch(() => undefined);
-  await fetch(`${api}/setChatMenuButton`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+    body: JSON.stringify(body),
+  });
+
+  await fetch(`${api}/setWebhook`, json({ url: `${appUrl}/api/telegram/webhook` })).catch(
+    () => undefined
+  );
+  await fetch(
+    `${api}/setChatMenuButton`,
+    json({
       menu_button: {
         type: "web_app",
         text: "Магазин",
         web_app: { url: appUrl },
       },
-    }),
-  }).catch(() => undefined);
+    })
+  ).catch(() => undefined);
+  await fetch(
+    `${api}/setMyDescription`,
+    json({ description: botDescription })
+  ).catch(() => undefined);
+  await fetch(
+    `${api}/setMyShortDescription`,
+    json({ short_description: botShortDescription })
+  ).catch(() => undefined);
 }
