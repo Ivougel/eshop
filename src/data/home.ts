@@ -41,7 +41,7 @@ export const homeRegions: HomeRegion[] = [
     title: "Индия",
     flagIcon: "🇮🇳",
     badge: "Удобный",
-    description: "Пополнение через карты",
+    description: "Пополнение через карты — удобные номиналы и быстрая выдача",
   },
 ];
 
