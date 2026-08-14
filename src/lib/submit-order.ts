@@ -1,4 +1,5 @@
 import {
+  getShopSession,
   getTelegramInitData,
   getTelegramUserId,
 } from "@/components/TelegramInit";
@@ -16,11 +17,13 @@ export async function submitOrder(input: {
 }): Promise<{ ok: boolean; order?: CreatedOrder; error?: string }> {
   let telegramUserId = getTelegramUserId();
   let telegramInitData = getTelegramInitData();
-  if (!telegramUserId) {
-    for (let attempt = 0; attempt < 25 && !telegramUserId; attempt += 1) {
+  let telegramSession = getShopSession();
+  if (!telegramUserId && !telegramSession) {
+    for (let attempt = 0; attempt < 25 && !telegramUserId && !telegramSession; attempt += 1) {
       await new Promise((resolve) => window.setTimeout(resolve, 100));
       telegramUserId = getTelegramUserId();
       telegramInitData = getTelegramInitData() || telegramInitData;
+      telegramSession = getShopSession() || telegramSession;
     }
   }
 
@@ -32,6 +35,7 @@ export async function submitOrder(input: {
         ...input,
         telegramUserId,
         telegramInitData,
+        telegramSession,
       }),
     });
     const data: {

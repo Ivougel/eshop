@@ -8,6 +8,7 @@ import {
   payUrlFor,
 } from "@/lib/orders";
 import { chatIdByUserId } from "@/lib/chats";
+import { verifyShopSession } from "@/lib/session";
 import { appUrlFrom, telegramCall } from "@/lib/telegram";
 
 type OrderBody = {
@@ -17,6 +18,7 @@ type OrderBody = {
   priceRub?: unknown;
   telegramUserId?: unknown;
   telegramInitData?: unknown;
+  telegramSession?: unknown;
 };
 
 function userIdFromInitData(initData: string): number | undefined {
@@ -75,9 +77,11 @@ export async function POST(request: Request) {
       ? body.telegramUserId
       : Number.parseInt(asText(body.telegramUserId), 10);
   const parsedId =
-    Number.isFinite(telegramUserId) && telegramUserId > 0
+    verifyShopSession(asText(body.telegramSession)) ??
+    userIdFromInitData(asText(body.telegramInitData)) ??
+    (Number.isFinite(telegramUserId) && telegramUserId > 0
       ? telegramUserId
-      : userIdFromInitData(asText(body.telegramInitData));
+      : undefined);
   const chatId = parsedId ? chatIdByUserId(parsedId) : undefined;
 
   if (!platform || !region || !denomination || !Number.isFinite(priceRub)) {

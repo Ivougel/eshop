@@ -31,6 +31,7 @@ declare global {
 
 const INIT_CACHE = "icity-tg-init";
 const USER_CACHE = "icity-tg-user";
+const SESSION_CACHE = "icity-tg-sid";
 
 function storageGet(key: string): string {
   try {
@@ -112,6 +113,31 @@ function initDataFromLocation(): string {
   );
 }
 
+export function captureShopSession(): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  const sid = new URLSearchParams(window.location.search).get("sid")?.trim();
+  if (sid) {
+    storageSet(SESSION_CACHE, sid);
+    const id = Number(sid.split(".")[0]);
+    if (Number.isFinite(id) && id > 0 && !readCachedUser()) {
+      cacheUser({ id });
+    }
+    return sid;
+  }
+  return storageGet(SESSION_CACHE);
+}
+
+export function getShopSession(): string {
+  return captureShopSession();
+}
+
+function userFromSession(): TelegramUser | undefined {
+  const id = Number(captureShopSession().split(".")[0]);
+  return Number.isFinite(id) && id > 0 ? { id } : undefined;
+}
+
 export function captureTelegramInitData(): string {
   if (typeof window === "undefined") {
     return "";
@@ -176,11 +202,16 @@ export function getTelegramUser(): TelegramUser | undefined {
     return fromInit;
   }
 
-  return readCachedUser();
+  const cached = readCachedUser();
+  if (cached) {
+    return cached;
+  }
+
+  return userFromSession();
 }
 
 export function getTelegramUserId(): number | undefined {
-  return getTelegramUser()?.id;
+  return getTelegramUser()?.id ?? userFromSession()?.id;
 }
 
 export function getTelegramUsername(): string | undefined {
@@ -217,6 +248,7 @@ export function openTelegramLink(url: string) {
 }
 
 function bootTelegram(): boolean {
+  captureShopSession();
   captureTelegramInitData();
   const webApp = window.Telegram?.WebApp;
   if (!webApp) {
@@ -229,11 +261,13 @@ function bootTelegram(): boolean {
 }
 
 if (typeof window !== "undefined") {
+  captureShopSession();
   captureTelegramInitData();
 }
 
 export function TelegramInit() {
   useEffect(() => {
+    captureShopSession();
     captureTelegramInitData();
     if (bootTelegram()) {
       return;

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { rememberChat } from "@/lib/chats";
 import { runtimeEnv } from "@/lib/env";
 import { payKeyboard, payUrlFor, refreshOrderLink } from "@/lib/orders";
+import { shopUrlWithSession } from "@/lib/session";
 import { appUrlFrom, telegramCall } from "@/lib/telegram";
 
 type TelegramUpdate = {
@@ -52,7 +53,17 @@ export async function POST(request: Request) {
   }
 
   if (token && chatId && text.startsWith("/start")) {
-    await sendStartMessage(token, chatId, appUrlFrom(request));
+    const userId = update.message?.from?.id ?? chatId;
+    const shopUrl = shopUrlWithSession(appUrlFrom(request), userId);
+    await telegramCall(token, "setChatMenuButton", {
+      chat_id: chatId,
+      menu_button: {
+        type: "web_app",
+        text: "Магазин",
+        web_app: { url: shopUrl },
+      },
+    });
+    await sendStartMessage(token, chatId, shopUrl);
   }
 
   const callback = update.callback_query;
