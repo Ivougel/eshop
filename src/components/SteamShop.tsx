@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ChevronIcon,
   NavCartIcon,
@@ -12,7 +12,7 @@ import {
   ServiceNav,
   type PayMethod,
 } from "@/components/shop/ShopChrome";
-import { getTelegramUsername } from "@/components/TelegramInit";
+import { submitOrder, type CreatedOrder } from "@/lib/submit-order";
 import {
   STEAM_COMMISSION,
   STEAM_KZT_RATE,
@@ -20,9 +20,7 @@ import {
   STEAM_PRESETS,
   steamFaq,
 } from "@/data/steam";
-import { submitOrder } from "@/lib/submit-order";
 
-const USERNAME_RE = /^[A-Za-z0-9_]{5,32}$/;
 const STEAM_LOGIN_RE = /^[A-Za-z0-9_]{3,32}$/;
 const GOLD = "#d4af6a";
 
@@ -41,17 +39,9 @@ export function SteamShop({ onHome, onFavorites, onCart, onProfile }: Props) {
   const [openGuide, setOpenGuide] = useState(false);
   const [openFaq, setOpenFaq] = useState(false);
   const [openFaqItem, setOpenFaqItem] = useState<number | null>(null);
-  const [telegramUsername, setTelegramUsername] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    const fromTelegram = getTelegramUsername();
-    if (fromTelegram) {
-      setTelegramUsername(fromTelegram);
-    }
-  }, []);
+  const [created, setCreated] = useState<CreatedOrder | null>(null);
 
   const payAmount = Number.isFinite(amount) ? Math.max(0, amount) : 0;
   const receiveAmount = Math.round(payAmount * (1 - STEAM_COMMISSION));
@@ -67,11 +57,6 @@ export function SteamShop({ onHome, onFavorites, onCart, onProfile }: Props) {
       setError("Укажите логин Steam и сумму от 10 ₽");
       return;
     }
-    const name = telegramUsername.trim().replace(/^@/, "");
-    if (!USERNAME_RE.test(name)) {
-      setError("Откройте магазин внутри Telegram или укажите username");
-      return;
-    }
     setError("");
     setPending(true);
     const result = await submitOrder({
@@ -81,18 +66,17 @@ export function SteamShop({ onHome, onFavorites, onCart, onProfile }: Props) {
         method === "sbp" ? "СБП" : "крипта"
       }`,
       priceRub: payAmount,
-      telegramUsername: name,
     });
     setPending(false);
-    if (!result.ok) {
+    if (!result.ok || !result.order) {
       setError(result.error ?? "Не удалось оформить заказ");
       return;
     }
-    setSuccess(true);
+    setCreated(result.order);
   }
 
-  if (success) {
-    return <OrderSuccess />;
+  if (created) {
+    return <OrderSuccess orderId={created.orderId} payUrl={created.payUrl} />;
   }
 
   return (

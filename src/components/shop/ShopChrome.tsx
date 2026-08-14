@@ -10,6 +10,7 @@ import {
   PlatformIcon,
   SbpIcon,
 } from "@/components/icons";
+import { closeMiniApp, openTelegramLink } from "@/components/TelegramInit";
 
 export type PayMethod = "sbp" | "crypto";
 export type ExtraKind = "none" | "promo" | "bonus";
@@ -315,14 +316,40 @@ export function GuideSteps({ steps }: { steps: string[] }) {
   );
 }
 
-export function OrderSuccess() {
+export function OrderSuccess({
+  orderId,
+  payUrl,
+}: {
+  orderId: number;
+  payUrl: string;
+}) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
-      <div className="order-popup flex w-full max-w-xs flex-col items-center rounded-3xl bg-[#12141c] px-6 py-10 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#d4af6a] text-3xl text-[#0a0c12]">
-          ✓
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-5 backdrop-blur-[2px]">
+      <div className="order-popup flex w-full max-w-[340px] flex-col items-center rounded-[28px] bg-[#1a1c23] px-6 py-8 text-center">
+        <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-[3px] border-[#3dcc6f] bg-[#16351f]">
+          <span className="text-[34px] leading-none text-white">✓</span>
         </span>
-        <p className="mt-5 text-xl font-semibold">Ваш заказ получен</p>
+        <h2 className="mt-5 text-[22px] leading-7 font-bold">
+          Заказ №{orderId} создан
+        </h2>
+        <p className="mt-3 text-[13px] leading-5 text-[#8a92a8]">
+          Нажмите «Перейти к оплате». После оплаты заказ будет готов — ссылка
+          также продублирована в чат с ботом.
+        </p>
+        <button
+          type="button"
+          onClick={() => openTelegramLink(payUrl)}
+          className="mt-6 h-12 w-full rounded-full bg-[#e2c27d] text-[15px] font-semibold text-[#1a1408] shadow-[0_0_24px_rgba(226,194,125,0.35)]"
+        >
+          Перейти к оплате
+        </button>
+        <button
+          type="button"
+          onClick={() => closeMiniApp()}
+          className="mt-4 text-[14px] text-[#8a92a8]"
+        >
+          Позже
+        </button>
       </div>
     </div>
   );

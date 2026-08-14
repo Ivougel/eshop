@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { rememberChat } from "@/lib/chats";
 import { runtimeEnv } from "@/lib/env";
+import { payKeyboard, payUrlFor, refreshOrderLink } from "@/lib/orders";
+import { appUrlFrom, telegramCall } from "@/lib/telegram";
 
 type TelegramUpdate = {
   message?: {
@@ -8,44 +10,23 @@ type TelegramUpdate = {
     chat: { id: number };
     from?: { id?: number; username?: string };
   };
+  callback_query?: {
+    id: string;
+    data?: string;
+    message?: {
+      message_id: number;
+      chat: { id: number };
+    };
+  };
 };
 
-function appUrl(request: Request): string {
-  const fromEnv = runtimeEnv("TELEGRAM_WEBAPP_URL").replace(/\/$/, "");
-  if (fromEnv) {
-    return fromEnv;
-  }
-
-  const proto = request.headers.get("x-forwarded-proto") ?? "https";
-  const host =
-    request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-
-  return host ? `${proto}://${host}` : "";
-}
-
-async function sendStartMessage(chatId: number, webAppUrl: string) {
-  const token = runtimeEnv("TELEGRAM_BOT_TOKEN");
-  if (!token || !webAppUrl) {
-    return;
-  }
-
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: "Выберите платформу — откроется магазин.",
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "Открыть магазин",
-              web_app: { url: webAppUrl },
-            },
-          ],
-        ],
-      },
-    }),
+async function sendStartMessage(token: string, chatId: number, webAppUrl: string) {
+  await telegramCall(token, "sendMessage", {
+    chat_id: chatId,
+    text: "Выберите платформу — откроется магазин.",
+    reply_markup: {
+      inline_keyboard: [[{ text: "Открыть магазин", web_app: { url: webAppUrl } }]],
+    },
   });
 }
 
@@ -58,6 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  const token = runtimeEnv("TELEGRAM_BOT_TOKEN");
   const text = update.message?.text ?? "";
   const chatId = update.message?.chat.id;
 
@@ -65,8 +47,33 @@ export async function POST(request: Request) {
     rememberChat(chatId, update.message?.from?.username);
   }
 
-  if (chatId && text.startsWith("/start")) {
-    await sendStartMessage(chatId, appUrl(request));
+  if (token && chatId && text.startsWith("/start")) {
+    await sendStartMessage(token, chatId, appUrlFrom(request));
+  }
+
+  const callback = update.callback_query;
+  if (token && callback?.id) {
+    const data = callback.data ?? "";
+    const orderId = Number(data.replace("refresh:", ""));
+    const order = Number.isFinite(orderId) ? refreshOrderLink(orderId) : undefined;
+    if (order && callback.message) {
+      const payUrl = payUrlFor(appUrlFrom(request), order);
+      await telegramCall(token, "editMessageReplyMarkup", {
+        chat_id: callback.message.chat.id,
+        message_id: callback.message.message_id,
+        reply_markup: payKeyboard(payUrl, order.id),
+      });
+      await telegramCall(token, "answerCallbackQuery", {
+        callback_query_id: callback.id,
+        text: "Ссылка обновлена",
+      });
+    } else {
+      await telegramCall(token, "answerCallbackQuery", {
+        callback_query_id: callback.id,
+        text: "Заказ не найден. Оформите его заново в магазине.",
+        show_alert: true,
+      });
+    }
   }
 
   return NextResponse.json({ ok: true });

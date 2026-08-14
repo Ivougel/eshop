@@ -1,19 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getDenominations, type Denomination } from "@/data/denominations";
 import { getPlanOffers, type PlanOffer } from "@/data/plans";
 import { regions } from "@/data/regions";
 import type { ShopEntry } from "@/data/home";
-import {
-  closeMiniApp,
-  getTelegramInitData,
-  getTelegramUserId,
-  getTelegramUsername,
-} from "@/components/TelegramInit";
+import { OrderSuccess } from "@/components/shop/ShopChrome";
 import { SbpIcon } from "@/components/icons";
-
-const USERNAME_RE = /^[A-Za-z0-9_]{5,32}$/;
+import { submitOrder, type CreatedOrder } from "@/lib/submit-order";
 
 export function OrderWizard({
   entry,
@@ -27,11 +21,9 @@ export function OrderWizard({
   );
   const [denominationId, setDenominationId] = useState<string | null>(null);
   const [planId, setPlanId] = useState<string | null>(null);
-  const [showUsernameForm, setShowUsernameForm] = useState(false);
-  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [created, setCreated] = useState<CreatedOrder | null>(null);
 
   const regionRef = useRef<HTMLElement>(null);
   const productRef = useRef<HTMLElement>(null);
@@ -39,13 +31,6 @@ export function OrderWizard({
 
   const lockRegion = Boolean(entry.regionId);
   const needsRegion = entry.kind !== "plans";
-
-  useEffect(() => {
-    const fromTelegram = getTelegramUsername();
-    if (fromTelegram) {
-      setUsername(fromTelegram);
-    }
-  }, []);
 
   useEffect(() => {
     if (!regionId || lockRegion || !needsRegion) {
@@ -60,14 +45,6 @@ export function OrderWizard({
     }
     payRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [denominationId, planId]);
-
-  useEffect(() => {
-    if (!success) {
-      return;
-    }
-    const timer = window.setTimeout(() => closeMiniApp(), 2200);
-    return () => window.clearTimeout(timer);
-  }, [success]);
 
   const availableRegions = entry.regionIds
     ? regions.filter((item) => entry.regionIds?.includes(item.id))
@@ -104,73 +81,32 @@ export function OrderWizard({
     setRegionId(id);
     setDenominationId(null);
     setPlanId(null);
-    setShowUsernameForm(false);
     setError("");
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function pay() {
     if (!region || !selected) {
-      return;
-    }
-
-    const telegramUsername = username.trim().replace(/^@/, "");
-    if (!USERNAME_RE.test(telegramUsername)) {
-      setError("Username: латиница, цифры и _, от 5 до 32 символов, без @");
       return;
     }
 
     setError("");
     setPending(true);
-
-    try {
-      let telegramUserId = getTelegramUserId();
-      if (!telegramUserId) {
-        for (let attempt = 0; attempt < 12 && !telegramUserId; attempt += 1) {
-          await new Promise((resolve) => window.setTimeout(resolve, 80));
-          telegramUserId = getTelegramUserId();
-        }
-      }
-
-      const response = await fetch("/api/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          platform: entry.platformTitle,
-          region: region.title,
-          denomination: selected.label,
-          priceRub: selected.priceRub,
-          telegramUsername,
-          telegramUserId,
-          telegramInitData: getTelegramInitData(),
-        }),
-      });
-
-      const data: { success?: boolean; error?: string } = await response.json();
-      if (!response.ok || !data.success) {
-        setError(data.error ?? "Не удалось оформить заказ");
-        return;
-      }
-
-      setSuccess(true);
-    } catch {
-      setError("Не удалось оформить заказ");
-    } finally {
-      setPending(false);
+    const result = await submitOrder({
+      platform: entry.platformTitle,
+      region: region.title,
+      denomination: selected.label,
+      priceRub: selected.priceRub,
+    });
+    setPending(false);
+    if (!result.ok || !result.order) {
+      setError(result.error ?? "Не удалось оформить заказ");
+      return;
     }
+    setCreated(result.order);
   }
 
-  if (success) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
-        <div className="order-popup flex w-full max-w-xs flex-col items-center rounded-3xl bg-[#1c1c1f] px-6 py-10 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-[#ff4d6d] to-[#ff9a3c] text-3xl">
-            ✓
-          </span>
-          <p className="mt-5 text-xl font-semibold">Ваш заказ получен</p>
-        </div>
-      </div>
-    );
+  if (created) {
+    return <OrderSuccess orderId={created.orderId} payUrl={created.payUrl} />;
   }
 
   const productLabel = entry.kind === "plans" ? "Тариф" : "Номинал";
@@ -243,7 +179,6 @@ export function OrderWizard({
                     selected={item.id === planId}
                     onSelect={() => {
                       setPlanId(item.id);
-                      setShowUsernameForm(false);
                       setError("");
                     }}
                   />
@@ -267,7 +202,6 @@ export function OrderWizard({
                     selected={item.id === denominationId}
                     onSelect={() => {
                       setDenominationId(item.id);
-                      setShowUsernameForm(false);
                       setError("");
                     }}
                   />
@@ -287,48 +221,20 @@ export function OrderWizard({
             </p>
           </div>
 
-          {!showUsernameForm ? (
-            <button
-              type="button"
-              onClick={() => setShowUsernameForm(true)}
-              className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ff4d6d] to-[#ff9a3c] px-4 text-base font-semibold text-white"
-            >
-              <SbpIcon className="h-7 w-7" />
-              Оплатить по СБП
-            </button>
-          ) : (
-            <form onSubmit={handleSubmit} className="mt-4">
-              <label className="block">
-                <span className="mb-1.5 block text-sm text-white/70">
-                  Ваш Telegram username
-                </span>
-                <input
-                  type="text"
-                  name="telegramUsername"
-                  value={username}
-                  onChange={(event) =>
-                    setUsername(event.target.value.replace(/^@/, ""))
-                  }
-                  placeholder="username"
-                  autoComplete="username"
-                  required
-                  className="h-12 w-full rounded-xl border border-white/10 bg-[#0e0e10] px-3 text-base outline-none focus:border-[#ff9a3c]"
-                />
-              </label>
-              {error ? (
-                <p className="mt-2 text-sm text-[#ff4d6d]" role="alert">
-                  {error}
-                </p>
-              ) : null}
-              <button
-                type="submit"
-                disabled={pending}
-                className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#ff4d6d] to-[#ff9a3c] text-base font-semibold text-white disabled:opacity-60"
-              >
-                {pending ? "Отправка…" : "Отправить заявку"}
-              </button>
-            </form>
-          )}
+        {error ? (
+          <p className="mt-3 text-sm text-[#ff4d6d]" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => void pay()}
+          className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#ff4d6d] to-[#ff9a3c] px-4 text-base font-semibold text-white disabled:opacity-60"
+        >
+          <SbpIcon className="h-7 w-7" />
+          {pending ? "Отправка…" : "Оплатить по СБП"}
+        </button>
 
           <p className="mt-4 text-center text-[11px] leading-4 text-white/40">
             Нажимая кнопку, вы принимаете{" "}

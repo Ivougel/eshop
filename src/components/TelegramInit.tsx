@@ -13,6 +13,7 @@ type TelegramWebApp = {
   ready: () => void;
   expand: () => void;
   close: () => void;
+  openLink?: (url: string) => void;
   initData?: string;
   initDataUnsafe?: {
     user?: TelegramUser;
@@ -88,6 +89,15 @@ export function getTelegramInitData(): string {
 
 export function closeMiniApp() {
   getTelegramWebApp()?.close();
+}
+
+export function openTelegramLink(url: string) {
+  const webApp = getTelegramWebApp();
+  if (webApp?.openLink) {
+    webApp.openLink(url);
+    return;
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 export function TelegramInit() {

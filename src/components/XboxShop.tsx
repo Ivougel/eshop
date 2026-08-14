@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   OrderSuccess,
   PayButton,
@@ -11,11 +11,8 @@ import {
   type ExtraKind,
   type PayMethod,
 } from "@/components/shop/ShopChrome";
-import { getTelegramUsername } from "@/components/TelegramInit";
 import { perMonth, xboxPlans, type XboxAccountKind } from "@/data/xbox";
-import { submitOrder } from "@/lib/submit-order";
-
-const USERNAME_RE = /^[A-Za-z0-9_]{5,32}$/;
+import { submitOrder, type CreatedOrder } from "@/lib/submit-order";
 
 type Props = {
   onHome: () => void;
@@ -30,17 +27,9 @@ export function XboxShop({ onHome, onFavorites, onCart, onProfile }: Props) {
   const [extra, setExtra] = useState<ExtraKind>("none");
   const [promo, setPromo] = useState("");
   const [method, setMethod] = useState<PayMethod>("sbp");
-  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    const fromTelegram = getTelegramUsername();
-    if (fromTelegram) {
-      setUsername(fromTelegram);
-    }
-  }, []);
+  const [created, setCreated] = useState<CreatedOrder | null>(null);
 
   const plan = xboxPlans.find((item) => item.id === planId) ?? xboxPlans[0];
   const bonus = extra === "bonus" ? Math.min(50, plan.priceRub) : 0;
@@ -49,11 +38,6 @@ export function XboxShop({ onHome, onFavorites, onCart, onProfile }: Props) {
   const line = `Game Pass Ultimate · ${plan.title}`;
 
   async function pay() {
-    const telegramUsername = username.trim().replace(/^@/, "");
-    if (!USERNAME_RE.test(telegramUsername)) {
-      setError("Username: латиница, цифры и _, от 5 до 32 символов");
-      return;
-    }
     setError("");
     setPending(true);
     const result = await submitOrder({
@@ -63,18 +47,17 @@ export function XboxShop({ onHome, onFavorites, onCart, onProfile }: Props) {
         extra === "bonus" ? " · бонусы" : ""
       }${extra === "promo" && promo ? ` · промо ${promo}` : ""}`,
       priceRub: total,
-      telegramUsername,
     });
     setPending(false);
-    if (!result.ok) {
+    if (!result.ok || !result.order) {
       setError(result.error ?? "Не удалось оформить заказ");
       return;
     }
-    setSuccess(true);
+    setCreated(result.order);
   }
 
-  if (success) {
-    return <OrderSuccess />;
+  if (created) {
+    return <OrderSuccess orderId={created.orderId} payUrl={created.payUrl} />;
   }
 
   return (
@@ -138,21 +121,11 @@ export function XboxShop({ onHome, onFavorites, onCart, onProfile }: Props) {
         <PromoRows extra={extra} onExtra={setExtra} promo={promo} onPromo={setPromo} />
         <SummaryCard line={line} linePrice={plan.priceRub} total={total} />
         <PaymentMethods method={method} onMethod={setMethod} />
-        <label className="block">
-          <span className="mb-1.5 block text-sm text-white/70">Telegram username</span>
-          <input
-            type="text"
-            value={username}
-            onChange={(event) => setUsername(event.target.value.replace(/^@/, ""))}
-            placeholder="username"
-            className="h-12 w-full rounded-xl border border-white/10 bg-[#08090c] px-3 text-base outline-none focus:border-[#3b82f6]"
-          />
-          {error ? (
-            <p className="mt-2 text-sm text-[#ff5a5a]" role="alert">
-              {error}
-            </p>
-          ) : null}
-        </label>
+        {error ? (
+          <p className="text-sm text-[#ff5a5a]" role="alert">
+            {error}
+          </p>
+        ) : null}
         <PayButton
           enabled
           pending={pending}
