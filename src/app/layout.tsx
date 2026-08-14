@@ -24,8 +24,8 @@ export const viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ru" className={`${geist.variable} h-full antialiased`}>
-      <body className="min-h-full bg-[#08090c] font-sans text-white">
+    <html lang="ru" className={`${geist.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full bg-[#08090c] font-sans text-white" suppressHydrationWarning>
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
           strategy="beforeInteractive"
