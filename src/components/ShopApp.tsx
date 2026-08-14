@@ -10,6 +10,7 @@ import { HomeMenu } from "@/components/HomeMenu";
 import { NavHeartIcon } from "@/components/icons";
 import { OrderWizard } from "@/components/OrderWizard";
 import { PsnShop } from "@/components/PsnShop";
+import { SteamShop } from "@/components/SteamShop";
 import { XboxShop } from "@/components/XboxShop";
 import type { CheckoutItem } from "@/data/cart";
 import { getGameById, searchGames, type Game } from "@/data/games";
@@ -133,6 +134,17 @@ export function ShopApp() {
     if (screen.entry.platformId === "xbox") {
       return (
         <XboxShop
+          onHome={() => setScreen({ name: "landing" })}
+          onFavorites={() => goStore("favorites")}
+          onCart={() => goStore("cart")}
+          onProfile={() => goStore("profile")}
+        />
+      );
+    }
+
+    if (screen.entry.platformId === "steam") {
+      return (
+        <SteamShop
           onHome={() => setScreen({ name: "landing" })}
           onFavorites={() => goStore("favorites")}
           onCart={() => goStore("cart")}

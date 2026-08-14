@@ -15,7 +15,8 @@ export type PayMethod = "sbp" | "crypto";
 export type ExtraKind = "none" | "promo" | "bonus";
 
 type NavProps = {
-  active: "xbox" | "region" | "home" | "favorites" | "cart" | "profile";
+  active: "xbox" | "steam" | "region" | "home" | "favorites" | "cart" | "profile";
+  brand?: "xbox" | "steam";
   regionFlag?: string;
   regionCode?: string;
   onHome: () => void;
@@ -27,6 +28,7 @@ type NavProps = {
 
 export function ServiceNav({
   active,
+  brand = "xbox",
   regionFlag,
   regionCode,
   onHome,
@@ -59,6 +61,13 @@ export function ServiceNav({
             <span>{regionCode}</span>
           </span>
           <span className="text-[10px] text-[#8a92a8]">Регион</span>
+        </button>
+      ) : brand === "steam" ? (
+        <button type="button" onClick={onFifth} className="flex flex-col items-center gap-0.5 px-1 py-1">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d4af6a]/20 text-[#d4af6a]">
+            <PlatformIcon icon="steam" className="h-4 w-4" />
+          </span>
+          <span className="text-[10px] font-medium text-[#d4af6a]">Steam</span>
         </button>
       ) : (
         <button type="button" onClick={onFifth} className="flex flex-col items-center gap-0.5 px-1 py-1">
