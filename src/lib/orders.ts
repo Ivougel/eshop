@@ -1,65 +1,57 @@
 export type StoredOrder = {
   id: number;
   chatId: number;
+  platform: string;
+  region: string;
+  denomination: string;
   priceRub: number;
-  nonce: string;
+  createdAt: string;
 };
 
 const orders = new Map<number, StoredOrder>();
 
-function randomNonce(): string {
-  return Math.random().toString(36).slice(2, 10);
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
-export function createOrder(chatId: number, priceRub: number): StoredOrder {
+export function createOrder(input: {
+  chatId: number;
+  platform: string;
+  region: string;
+  denomination: string;
+  priceRub: number;
+}): StoredOrder {
   let id = 10000 + Math.floor(Math.random() * 90000);
   for (let attempt = 0; attempt < 12 && orders.has(id); attempt += 1) {
     id = 10000 + Math.floor(Math.random() * 90000);
   }
-  const order: StoredOrder = { id, chatId, priceRub, nonce: randomNonce() };
+  const order: StoredOrder = {
+    id,
+    chatId: input.chatId,
+    platform: input.platform,
+    region: input.region,
+    denomination: input.denomination,
+    priceRub: input.priceRub,
+    createdAt: new Date().toISOString(),
+  };
   orders.set(id, order);
   return order;
 }
 
-export function getOrder(id: number): StoredOrder | undefined {
-  return orders.get(id);
-}
-
-export function refreshOrderLink(id: number): StoredOrder | undefined {
-  const order = orders.get(id);
-  if (!order) {
-    return undefined;
-  }
-  const next = { ...order, nonce: randomNonce() };
-  orders.set(id, next);
-  return next;
-}
-
-export function payUrlFor(baseUrl: string, order: StoredOrder): string {
-  const url = new URL(`${baseUrl.replace(/\/$/, "")}/pay/${order.id}`);
-  url.searchParams.set("t", order.nonce);
-  url.searchParams.set("sum", String(order.priceRub));
-  return url.toString();
-}
-
-export function orderMessageHtml(orderId: number, priceRub: number, bot: string): string {
-  const amount = priceRub.toFixed(2);
+export function receiptMessageHtml(order: StoredOrder): string {
+  const when = new Date(order.createdAt).toLocaleString("ru-RU", {
+    timeZone: "Europe/Moscow",
+  });
   return [
-    `Бот заботливо собрал все ваши покупки в заказ <b>№${orderId}</b>. Осталось только его оплатить.`,
+    "<b>Чек о покупке</b>",
     "",
-    `Сумма к оплате <b>${amount} руб.</b>`,
-    "",
-    "Ссылка работает только один раз, если нужно её обновить — просто нажмите на кнопку под этим сообщением.",
-    "",
-    `Не получается оплатить? Напишите на @${bot}, разберёмся.`,
+    `Заказ <b>№${order.id}</b>`,
+    `Товар: ${escapeHtml(order.platform)} · ${escapeHtml(order.denomination)}`,
+    `Регион: ${escapeHtml(order.region)}`,
+    `Сумма: <b>${order.priceRub.toLocaleString("ru-RU")} ₽</b>`,
+    `Дата: ${when}`,
   ].join("\n");
-}
-
-export function payKeyboard(payUrl: string, orderId: number) {
-  return {
-    inline_keyboard: [
-      [{ text: "💳 Оплатить", url: payUrl }],
-      [{ text: "🔄 Обновить", callback_data: `refresh:${orderId}` }],
-    ],
-  };
 }

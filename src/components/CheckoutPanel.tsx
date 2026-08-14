@@ -42,7 +42,7 @@ export function CheckoutPanel({
   }
 
   if (created) {
-    return <OrderSuccess orderId={created.orderId} payUrl={created.payUrl} />;
+    return <OrderSuccess orderId={created.orderId} />;
   }
 
   return (

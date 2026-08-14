@@ -10,7 +10,7 @@ import {
   PlatformIcon,
   SbpIcon,
 } from "@/components/icons";
-import { closeMiniApp, openTelegramLink } from "@/components/TelegramInit";
+import { closeMiniApp } from "@/components/TelegramInit";
 
 export type PayMethod = "sbp" | "crypto";
 export type ExtraKind = "none" | "promo" | "bonus";
@@ -316,13 +316,7 @@ export function GuideSteps({ steps }: { steps: string[] }) {
   );
 }
 
-export function OrderSuccess({
-  orderId,
-  payUrl,
-}: {
-  orderId: number;
-  payUrl: string;
-}) {
+export function OrderSuccess({ orderId }: { orderId: number }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-5 backdrop-blur-[2px]">
       <div className="order-popup flex w-full max-w-[340px] flex-col items-center rounded-[28px] bg-[#1a1c23] px-6 py-8 text-center">
@@ -333,22 +327,14 @@ export function OrderSuccess({
           Заказ №{orderId} создан
         </h2>
         <p className="mt-3 text-[13px] leading-5 text-[#8a92a8]">
-          Нажмите «Перейти к оплате». После оплаты заказ будет готов — ссылка
-          также продублирована в чат с ботом.
+          Чек отправлен в чат с ботом.
         </p>
         <button
           type="button"
-          onClick={() => openTelegramLink(payUrl)}
+          onClick={() => closeMiniApp()}
           className="mt-6 h-12 w-full rounded-full bg-[#e2c27d] text-[15px] font-semibold text-[#1a1408] shadow-[0_0_24px_rgba(226,194,125,0.35)]"
         >
-          Перейти к оплате
-        </button>
-        <button
-          type="button"
-          onClick={() => closeMiniApp()}
-          className="mt-4 text-[14px] text-[#8a92a8]"
-        >
-          Позже
+          Готово
         </button>
       </div>
     </div>

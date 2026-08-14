@@ -106,7 +106,7 @@ export function OrderWizard({
   }
 
   if (created) {
-    return <OrderSuccess orderId={created.orderId} payUrl={created.payUrl} />;
+    return <OrderSuccess orderId={created.orderId} />;
   }
 
   const productLabel = entry.kind === "plans" ? "Тариф" : "Номинал";

@@ -124,10 +124,6 @@ export function captureShopSession(): string {
   const sid = fromQuery || fromPath;
   if (sid) {
     storageSet(SESSION_CACHE, sid);
-    const id = Number(sid.split(".")[0]);
-    if (Number.isFinite(id) && id > 0 && !readCachedUser()) {
-      cacheUser({ id });
-    }
     return sid;
   }
   return storageGet(SESSION_CACHE);
@@ -137,23 +133,9 @@ export function getShopSession(): string {
   return captureShopSession();
 }
 
-function userFromSession(): TelegramUser | undefined {
-  const id = Number(captureShopSession().split(".")[0]);
-  return Number.isFinite(id) && id > 0 ? { id } : undefined;
-}
-
 export function captureTelegramInitData(): string {
   if (typeof window === "undefined") {
     return "";
-  }
-
-  const fromLocation = initDataFromLocation();
-  if (fromLocation) {
-    storageSet(INIT_CACHE, fromLocation);
-    const user = parseInitData(fromLocation);
-    if (user) {
-      cacheUser(user);
-    }
   }
 
   const webAppData = window.Telegram?.WebApp?.initData?.trim() ?? "";
@@ -164,6 +146,16 @@ export function captureTelegramInitData(): string {
       cacheUser(user);
     }
     return webAppData;
+  }
+
+  const fromLocation = initDataFromLocation();
+  if (fromLocation) {
+    storageSet(INIT_CACHE, fromLocation);
+    const user = parseInitData(fromLocation);
+    if (user) {
+      cacheUser(user);
+    }
+    return fromLocation;
   }
 
   try {
@@ -179,7 +171,7 @@ export function captureTelegramInitData(): string {
     /* ignore */
   }
 
-  return fromLocation || storageGet(INIT_CACHE);
+  return storageGet(INIT_CACHE);
 }
 
 export function getTelegramWebApp(): TelegramWebApp | undefined {
@@ -211,11 +203,11 @@ export function getTelegramUser(): TelegramUser | undefined {
     return cached;
   }
 
-  return userFromSession();
+  return undefined;
 }
 
 export function getTelegramUserId(): number | undefined {
-  return getTelegramUser()?.id ?? userFromSession()?.id;
+  return getTelegramUser()?.id;
 }
 
 export function getTelegramUsername(): string | undefined {

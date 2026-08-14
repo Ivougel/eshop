@@ -1,53 +1,18 @@
 import { NextResponse } from "next/server";
-import { botUsername } from "@/data/home";
 import { runtimeEnv } from "@/lib/env";
-import {
-  createOrder,
-  orderMessageHtml,
-  payKeyboard,
-  payUrlFor,
-} from "@/lib/orders";
-import { chatIdByUserId } from "@/lib/chats";
-import { verifyShopSession } from "@/lib/session";
-import { appUrlFrom, telegramCallRetry } from "@/lib/telegram";
+import { createOrder, receiptMessageHtml } from "@/lib/orders";
+import { telegramCallRetry } from "@/lib/telegram";
+import { validateInitData } from "@/lib/validate-init-data";
+
+export const runtime = "nodejs";
 
 type OrderBody = {
   platform?: unknown;
   region?: unknown;
   denomination?: unknown;
   priceRub?: unknown;
-  telegramUserId?: unknown;
   telegramInitData?: unknown;
-  telegramSession?: unknown;
 };
-
-function userIdFromInitData(initData: string): number | undefined {
-  try {
-    const raw = initData.trim();
-    if (!raw) {
-      return undefined;
-    }
-    const direct = new URLSearchParams(raw);
-    let userRaw = direct.get("user");
-    if (!userRaw) {
-      const nested = direct.get("tgWebAppData");
-      if (nested) {
-        userRaw = new URLSearchParams(nested).get("user");
-      }
-    }
-    if (!userRaw) {
-      return undefined;
-    }
-    if (userRaw.includes("user=")) {
-      return userIdFromInitData(userRaw);
-    }
-    const user = JSON.parse(userRaw) as { id?: number | string };
-    const id = Number(user.id);
-    return Number.isFinite(id) && id > 0 ? id : undefined;
-  } catch {
-    return undefined;
-  }
-}
 
 function asText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -72,19 +37,9 @@ export async function POST(request: Request) {
     typeof body.priceRub === "number"
       ? body.priceRub
       : Number.parseInt(asText(body.priceRub), 10);
-  const telegramUserId =
-    typeof body.telegramUserId === "number"
-      ? body.telegramUserId
-      : Number.parseInt(asText(body.telegramUserId), 10);
-  const parsedId =
-    verifyShopSession(asText(body.telegramSession)) ??
-    userIdFromInitData(asText(body.telegramInitData)) ??
-    (Number.isFinite(telegramUserId) && telegramUserId > 0
-      ? telegramUserId
-      : undefined);
-  const chatId = parsedId ? chatIdByUserId(parsedId) : undefined;
+  const telegramInitData = asText(body.telegramInitData);
 
-  if (!platform || !region || !denomination || !Number.isFinite(priceRub)) {
+  if (!platform || !region || !denomination || !Number.isFinite(priceRub) || priceRub <= 0) {
     return NextResponse.json(
       { success: false, error: "Заполните заказ" },
       { status: 400 }
@@ -92,41 +47,36 @@ export async function POST(request: Request) {
   }
 
   const token = runtimeEnv("TELEGRAM_BOT_TOKEN");
-  const baseUrl = appUrlFrom(request);
-
-  if (!token || !baseUrl) {
+  if (!token) {
     return NextResponse.json(
       { success: false, error: "Сервер не настроен" },
       { status: 500 }
     );
   }
 
-  if (!chatId) {
+  const validated = validateInitData(telegramInitData, token);
+  if (!validated) {
     return NextResponse.json(
       { success: false, error: "Откройте магазин внутри Telegram" },
-      { status: 400 }
+      { status: 401 }
     );
   }
 
-  const order = createOrder(chatId, priceRub);
-  const payUrl = payUrlFor(baseUrl, order);
-  const payload = {
+  const chatId = validated.user.id;
+  const order = createOrder({
+    chatId,
+    platform,
+    region,
+    denomination,
+    priceRub,
+  });
+
+  const delivered = await telegramCallRetry(token, "sendMessage", {
     chat_id: chatId,
-    text: orderMessageHtml(order.id, priceRub, botUsername),
+    text: receiptMessageHtml(order),
     parse_mode: "HTML",
     disable_web_page_preview: true,
-    reply_markup: payKeyboard(payUrl, order.id),
-  };
-  let delivered = await telegramCallRetry(token, "sendMessage", payload);
-
-  if (!delivered.ok && /BUTTON_URL|can't parse entities/i.test(delivered.error ?? "")) {
-    delivered = await telegramCallRetry(token, "sendMessage", {
-      chat_id: chatId,
-      text: `${orderMessageHtml(order.id, priceRub, botUsername)}\n\n${payUrl}`,
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-    });
-  }
+  });
 
   if (!delivered.ok) {
     const flood = delivered.errorCode === 429 || /too many requests/i.test(delivered.error ?? "");
@@ -135,7 +85,7 @@ export async function POST(request: Request) {
         success: false,
         error: flood
           ? "Telegram временно ограничил отправку. Подождите пару секунд и нажмите «Оплатить» ещё раз."
-          : "Не удалось отправить заказ. Напишите боту /start и попробуйте снова.",
+          : "Не удалось отправить чек в чат. Напишите боту /start и попробуйте снова.",
       },
       { status: 502 }
     );
@@ -144,6 +94,5 @@ export async function POST(request: Request) {
   return NextResponse.json({
     success: true,
     orderId: order.id,
-    payUrl,
   });
 }

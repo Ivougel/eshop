@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { startKeyboard, startMessageHtml } from "@/data/bot-start";
 import { rememberChat } from "@/lib/chats";
 import { runtimeEnv } from "@/lib/env";
-import { payKeyboard, payUrlFor, refreshOrderLink } from "@/lib/orders";
-import { shopUrlWithSession } from "@/lib/session";
 import { appUrlFrom, telegramCall } from "@/lib/telegram";
 
 type TelegramUpdate = {
@@ -11,14 +9,6 @@ type TelegramUpdate = {
     text?: string;
     chat: { id: number };
     from?: { id?: number; username?: string };
-  };
-  callback_query?: {
-    id: string;
-    data?: string;
-    message?: {
-      message_id: number;
-      chat: { id: number };
-    };
   };
 };
 
@@ -55,34 +45,7 @@ export async function POST(request: Request) {
     }
 
     if (token && chatId && text.startsWith("/start")) {
-      const userId = update.message?.from?.id ?? chatId;
-      const shopUrl = shopUrlWithSession(appUrlFrom(request), userId);
-      await sendStartMessage(token, chatId, shopUrl || appUrlFrom(request));
-    }
-
-    const callback = update.callback_query;
-    if (token && callback?.id) {
-      const data = callback.data ?? "";
-      const orderId = Number(data.replace("refresh:", ""));
-      const order = Number.isFinite(orderId) ? refreshOrderLink(orderId) : undefined;
-      if (order && callback.message) {
-        const payUrl = payUrlFor(appUrlFrom(request), order);
-        await telegramCall(token, "editMessageReplyMarkup", {
-          chat_id: callback.message.chat.id,
-          message_id: callback.message.message_id,
-          reply_markup: payKeyboard(payUrl, order.id),
-        });
-        await telegramCall(token, "answerCallbackQuery", {
-          callback_query_id: callback.id,
-          text: "Ссылка обновлена",
-        });
-      } else {
-        await telegramCall(token, "answerCallbackQuery", {
-          callback_query_id: callback.id,
-          text: "Заказ не найден. Оформите его заново в магазине.",
-          show_alert: true,
-        });
-      }
+      await sendStartMessage(token, chatId, appUrlFrom(request));
     }
 
     return NextResponse.json({ ok: true });
