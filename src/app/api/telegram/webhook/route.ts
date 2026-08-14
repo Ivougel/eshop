@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { rememberChat } from "@/lib/chats";
 import { runtimeEnv } from "@/lib/env";
 
 type TelegramUpdate = {
   message?: {
     text?: string;
     chat: { id: number };
+    from?: { id?: number; username?: string };
   };
 };
 
@@ -58,6 +60,10 @@ export async function POST(request: Request) {
 
   const text = update.message?.text ?? "";
   const chatId = update.message?.chat.id;
+
+  if (chatId) {
+    rememberChat(chatId, update.message?.from?.username);
+  }
 
   if (chatId && text.startsWith("/start")) {
     await sendStartMessage(chatId, appUrl(request));

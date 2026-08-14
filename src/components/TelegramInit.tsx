@@ -32,10 +32,11 @@ function parseUserFromInitData(initData: string): TelegramUser | undefined {
       return undefined;
     }
     const user = JSON.parse(userRaw) as TelegramUser;
-    if (typeof user.id !== "number") {
+    const id = Number(user.id);
+    if (!Number.isFinite(id) || id === 0) {
       return undefined;
     }
-    return user;
+    return { ...user, id };
   } catch {
     return undefined;
   }
@@ -49,9 +50,14 @@ export function getTelegramWebApp(): TelegramWebApp | undefined {
 
 export function getTelegramUser(): TelegramUser | undefined {
   const webApp = getTelegramWebApp();
-  return (
-    webApp?.initDataUnsafe?.user ?? parseUserFromInitData(webApp?.initData ?? "")
-  );
+  const unsafe = webApp?.initDataUnsafe?.user;
+  if (unsafe?.id) {
+    const id = Number(unsafe.id);
+    if (Number.isFinite(id) && id > 0) {
+      return { ...unsafe, id };
+    }
+  }
+  return parseUserFromInitData(webApp?.initData ?? "");
 }
 
 export function getTelegramUserId(): number | undefined {

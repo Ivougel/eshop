@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { getDenominations, type Denomination } from "@/data/denominations";
 import { platforms, type Platform } from "@/data/platforms";
 import { regions } from "@/data/regions";
@@ -24,12 +24,38 @@ export function OrderWizard() {
   const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const platformRef = useRef<HTMLElement>(null);
+  const regionRef = useRef<HTMLElement>(null);
+  const productRef = useRef<HTMLElement>(null);
+  const payRef = useRef<HTMLElement>(null);
+
   useEffect(() => {
     const fromTelegram = getTelegramUsername();
     if (fromTelegram) {
       setUsername(fromTelegram);
     }
   }, []);
+
+  useEffect(() => {
+    if (!platformId) {
+      return;
+    }
+    regionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [platformId]);
+
+  useEffect(() => {
+    if (!regionId) {
+      return;
+    }
+    productRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [regionId]);
+
+  useEffect(() => {
+    if (!denominationId) {
+      return;
+    }
+    payRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [denominationId]);
 
   useEffect(() => {
     if (!success) {
@@ -79,6 +105,14 @@ export function OrderWizard() {
     setPending(true);
 
     try {
+      let telegramUserId = getTelegramUserId();
+      if (!telegramUserId) {
+        for (let attempt = 0; attempt < 12 && !telegramUserId; attempt += 1) {
+          await new Promise((resolve) => window.setTimeout(resolve, 80));
+          telegramUserId = getTelegramUserId();
+        }
+      }
+
       const response = await fetch("/api/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,7 +122,7 @@ export function OrderWizard() {
           denomination: `${denomination.currency} ${denomination.amount}`,
           priceRub: denomination.priceRub,
           telegramUsername,
-          telegramUserId: getTelegramUserId(),
+          telegramUserId,
           telegramInitData: getTelegramInitData(),
         }),
       });
@@ -122,7 +156,40 @@ export function OrderWizard() {
 
   return (
     <div className="flex flex-col gap-7">
-      <section>
+      <nav className="sticky top-0 z-20 -mx-4 flex gap-2 overflow-x-auto bg-[#0e0e10]/95 px-4 py-2">
+        <NavChip
+          label="Платформа"
+          onClick={() =>
+            platformRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+        />
+        {platform ? (
+          <NavChip
+            label="Регион"
+            onClick={() =>
+              regionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          />
+        ) : null}
+        {platform && region ? (
+          <NavChip
+            label="Номинал"
+            onClick={() =>
+              productRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          />
+        ) : null}
+        {denomination ? (
+          <NavChip
+            label="Оплата"
+            onClick={() =>
+              payRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          />
+        ) : null}
+      </nav>
+
+      <section ref={platformRef} className="scroll-mt-16">
         <h1 className="text-xl font-semibold tracking-tight">Платформа</h1>
         <div className="mt-3 grid grid-cols-2 gap-3">
           {platforms.map((item) => (
@@ -137,7 +204,7 @@ export function OrderWizard() {
       </section>
 
       {platform ? (
-        <section>
+        <section ref={regionRef} className="scroll-mt-16">
           <h2 className="text-lg font-semibold">Регион</h2>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {regions.map((item) => (
@@ -161,7 +228,7 @@ export function OrderWizard() {
 
       {platform && region ? (
         <>
-          <section>
+          <section ref={productRef} className="scroll-mt-16">
             <h2 className="text-lg font-semibold">Тип товара</h2>
             <div className="mt-3">
               <span className="inline-flex rounded-full bg-gradient-to-r from-[#ff4d6d] to-[#ff9a3c] px-4 py-2 text-sm font-medium text-white">
@@ -170,7 +237,7 @@ export function OrderWizard() {
             </div>
           </section>
 
-          <section>
+          <section className="scroll-mt-16">
             <h2 className="text-lg font-semibold">Номинал</h2>
             <div className="mt-3 grid grid-cols-2 gap-3">
               {offers.map((item) => (
@@ -191,7 +258,7 @@ export function OrderWizard() {
       ) : null}
 
       {platform && region && denomination ? (
-        <section className="rounded-2xl bg-[#1c1c1f] p-4">
+        <section ref={payRef} className="scroll-mt-16 rounded-2xl bg-[#1c1c1f] p-4">
           <div className="flex items-end justify-between gap-3">
             <p className="text-sm text-white/60">К оплате</p>
             <p className="text-2xl font-semibold tracking-tight">
@@ -255,6 +322,24 @@ export function OrderWizard() {
         </section>
       ) : null}
     </div>
+  );
+}
+
+function NavChip({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="shrink-0 rounded-full bg-[#1c1c1f] px-3 py-1.5 text-xs font-medium text-white/80"
+    >
+      {label}
+    </button>
   );
 }
 

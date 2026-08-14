@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { chatIdByUsername } from "@/lib/chats";
 import { runtimeEnv } from "@/lib/env";
 
 const USERNAME_RE = /^[A-Za-z0-9_]{5,32}$/;
@@ -19,8 +20,9 @@ function userIdFromInitData(initData: string): number | undefined {
     if (!userRaw) {
       return undefined;
     }
-    const user = JSON.parse(userRaw) as { id?: number };
-    return typeof user.id === "number" ? user.id : undefined;
+    const user = JSON.parse(userRaw) as { id?: number | string };
+    const id = Number(user.id);
+    return Number.isFinite(id) && id > 0 ? id : undefined;
   } catch {
     return undefined;
   }
@@ -34,7 +36,7 @@ async function sendTelegramMessage(
   token: string,
   chatId: string | number,
   text: string
-): Promise<boolean> {
+): Promise<{ ok: boolean; error?: string }> {
   const response = await fetch(
     `https://api.telegram.org/bot${token}/sendMessage`,
     {
@@ -43,8 +45,11 @@ async function sendTelegramMessage(
       body: JSON.stringify({ chat_id: chatId, text }),
     }
   );
-  const data: { ok?: boolean } = await response.json();
-  return response.ok && Boolean(data.ok);
+  const data: { ok?: boolean; description?: string } = await response.json();
+  if (response.ok && data.ok) {
+    return { ok: true };
+  }
+  return { ok: false, error: data.description };
 }
 
 export async function POST(request: Request) {
@@ -75,7 +80,7 @@ export async function POST(request: Request) {
     (Number.isFinite(telegramUserId) && telegramUserId > 0
       ? telegramUserId
       : userIdFromInitData(asText(body.telegramInitData))) ??
-    (telegramUsername ? `@${telegramUsername.toLowerCase()}` : undefined);
+    chatIdByUsername(telegramUsername);
 
   if (!platform || !region || !denomination || !Number.isFinite(priceRub)) {
     return NextResponse.json(
@@ -120,9 +125,12 @@ Telegram: @${telegramUsername}`;
 
   const delivered = await sendTelegramMessage(token, chatId, orderText);
 
-  if (!delivered) {
+  if (!delivered.ok) {
     return NextResponse.json(
-      { success: false, error: "Не удалось отправить заказ" },
+      {
+        success: false,
+        error: "Не удалось отправить заказ. Напишите боту /start и попробуйте снова.",
+      },
       { status: 502 }
     );
   }
