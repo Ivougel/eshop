@@ -21,6 +21,11 @@ const REGION_OFFERS: Record<
     { amount: 750, currency: "TRY", priceRub: 2490 },
     { amount: 1000, currency: "TRY", priceRub: 3190 },
   ],
+  in: [
+    { amount: 500, currency: "INR", priceRub: 590 },
+    { amount: 1000, currency: "INR", priceRub: 1090 },
+    { amount: 2000, currency: "INR", priceRub: 2090 },
+  ],
   pl: [
     { amount: 50, currency: "PLN", priceRub: 1290 },
     { amount: 100, currency: "PLN", priceRub: 2490 },

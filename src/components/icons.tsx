@@ -20,6 +20,12 @@ export function PlatformIcon({
       return <PlayStationIcon className={className} />;
     case "steam":
       return <SteamIcon className={className} />;
+    case "xbox":
+      return <XboxIcon className={className} />;
+    case "ai":
+      return <AiIcon className={className} />;
+    case "telegram":
+      return <TelegramIcon className={className} />;
     default:
       return <span className={className} />;
   }
@@ -64,6 +70,38 @@ function SteamIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
       <path d="M12 2a10 10 0 0 0-10 9.2l5.4 2.2a2.7 2.7 0 0 1 2.7-1.4l3.9-5.6a3.6 3.6 0 1 1 3.1 3.2l-5.5 4a2.7 2.7 0 0 1-2.7 2.6l-3.8-1.6A10 10 0 1 0 12 2zm7.2 5.6a2.2 2.2 0 1 0-2.1 3l.1-.1a2.2 2.2 0 0 0 2-2.9zM8.9 14.3a1.5 1.5 0 1 0-1.4 2l1.8.8a1.5 1.5 0 0 0-.4-2.8z" />
+    </svg>
+  );
+}
+
+function XboxIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M7.2 4.4C8.6 3.5 10.2 3 12 3c1.8 0 3.4.5 4.8 1.4C15.2 6.6 13.5 9.4 12 11.8 10.5 9.4 8.8 6.6 7.2 4.4zM4.2 7.1C3.4 8.5 3 10.2 3 12c0 3.6 2.1 6.7 5.1 8.1C6.6 17 5.2 12.8 5.2 9.4c0-.8.1-1.5.3-2.3h-1.3zm15.6 0h-1.3c.2.8.3 1.5.3 2.3 0 3.4-1.4 7.6-2.9 10.7 3-1.4 5.1-4.5 5.1-8.1 0-1.8-.4-3.5-1.2-4.9zM12 13.6c1.4 2.2 3.3 5.2 4.4 7.1-1.4.6-2.9.9-4.4.9s-3-.3-4.4-.9c1.1-1.9 3-4.9 4.4-7.1z" />
+    </svg>
+  );
+}
+
+function AiIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M12.4 3.1 15 8.4l5.7.5-4.3 3.8 1.3 5.6-5.3-3.1-5.3 3.1 1.3-5.6L4 8.9l5.7-.5 2.7-5.3z" />
+    </svg>
+  );
+}
+
+function TelegramIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M20.7 4.3 3.8 10.8c-1.1.4-1.1 1.1-.2 1.4l4.3 1.3 10.4-6.6c.5-.3.9-.1.6.2l-8.4 7.6-.3 4.4c.4 0 .6-.2.8-.4l2.1-2 4.3 3.2c.8.4 1.4.2 1.6-.7l2.8-13.3c.3-1.2-.4-1.8-1.1-1.6z" />
+    </svg>
+  );
+}
+
+export function ChevronIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M9 6l6 6-6 6" />
     </svg>
   );
 }

@@ -2,24 +2,33 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { getDenominations, type Denomination } from "@/data/denominations";
-import { platforms, type Platform } from "@/data/platforms";
+import { getPlanOffers, type PlanOffer } from "@/data/plans";
 import { getPsOffers, psDurations } from "@/data/ps-subscriptions";
 import { regions } from "@/data/regions";
+import type { ShopEntry } from "@/data/home";
 import {
   closeMiniApp,
   getTelegramInitData,
   getTelegramUserId,
   getTelegramUsername,
 } from "@/components/TelegramInit";
-import { PlatformIcon, SbpIcon } from "@/components/icons";
+import { SbpIcon } from "@/components/icons";
 import { PsSubscriptions } from "@/components/PsSubscriptions";
 
 const USERNAME_RE = /^[A-Za-z0-9_]{5,32}$/;
 
-export function OrderWizard() {
-  const [platformId, setPlatformId] = useState<string | null>(null);
-  const [regionId, setRegionId] = useState<string | null>(null);
+export function OrderWizard({
+  entry,
+  onBack,
+}: {
+  entry: ShopEntry;
+  onBack: () => void;
+}) {
+  const [regionId, setRegionId] = useState<string | null>(
+    entry.kind === "plans" ? "any" : (entry.regionId ?? null)
+  );
   const [denominationId, setDenominationId] = useState<string | null>(null);
+  const [planId, setPlanId] = useState<string | null>(null);
   const [psCatalogId, setPsCatalogId] = useState("ps-plus");
   const [psMonths, setPsMonths] = useState(1);
   const [psOfferId, setPsOfferId] = useState<string | null>(null);
@@ -29,10 +38,12 @@ export function OrderWizard() {
   const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const platformRef = useRef<HTMLElement>(null);
   const regionRef = useRef<HTMLElement>(null);
   const productRef = useRef<HTMLElement>(null);
   const payRef = useRef<HTMLElement>(null);
+
+  const lockRegion = Boolean(entry.regionId);
+  const needsRegion = entry.kind !== "plans";
 
   useEffect(() => {
     const fromTelegram = getTelegramUsername();
@@ -42,25 +53,18 @@ export function OrderWizard() {
   }, []);
 
   useEffect(() => {
-    if (!platformId) {
-      return;
-    }
-    regionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [platformId]);
-
-  useEffect(() => {
-    if (!regionId) {
+    if (!regionId || lockRegion || !needsRegion) {
       return;
     }
     productRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [regionId]);
+  }, [regionId, lockRegion, needsRegion]);
 
   useEffect(() => {
-    if (!denominationId && !psOfferId) {
+    if (!denominationId && !psOfferId && !planId) {
       return;
     }
     payRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [denominationId, psOfferId]);
+  }, [denominationId, psOfferId, planId]);
 
   useEffect(() => {
     if (!success) {
@@ -70,57 +74,62 @@ export function OrderWizard() {
     return () => window.clearTimeout(timer);
   }, [success]);
 
-  const platform = platforms.find((item) => item.id === platformId) ?? null;
-  const region = regions.find((item) => item.id === regionId) ?? null;
+  const availableRegions = entry.regionIds
+    ? regions.filter((item) => entry.regionIds?.includes(item.id))
+    : regions;
+  const region =
+    entry.kind === "plans"
+      ? { id: "any", title: "—" }
+      : (availableRegions.find((item) => item.id === regionId) ?? null);
   const offers = useMemo(
-    () => (platformId && regionId ? getDenominations(platformId, regionId) : []),
-    [platformId, regionId]
+    () =>
+      entry.kind === "cards" && regionId
+        ? getDenominations(entry.platformId, regionId)
+        : [],
+    [entry.kind, entry.platformId, regionId]
   );
   const denomination =
     offers.find((item) => item.id === denominationId) ?? null;
-  const isPlaystation = platformId === "playstation";
+  const plans = entry.kind === "plans" ? getPlanOffers(entry.platformId) : [];
+  const plan = plans.find((item) => item.id === planId) ?? null;
   const psOffer =
     getPsOffers(psCatalogId, psMonths).find((item) => item.id === psOfferId) ??
     null;
   const psDurationTitle =
     psDurations.find((item) => item.months === psMonths)?.title ??
     `${psMonths} мес.`;
-  const selected = isPlaystation
-    ? psOffer
-      ? {
-          label: `${psOffer.title}, ${psDurationTitle}`,
-          priceRub: psOffer.priceRub,
-        }
-      : null
-    : denomination
-      ? {
-          label: `${denomination.currency} ${denomination.amount}`,
-          priceRub: denomination.priceRub,
-        }
-      : null;
-
-  function selectPlatform(id: string) {
-    setPlatformId(id);
-    setRegionId(null);
-    setDenominationId(null);
-    setPsCatalogId("ps-plus");
-    setPsMonths(1);
-    setPsOfferId(null);
-    setShowUsernameForm(false);
-    setError("");
-  }
+  const selected =
+    entry.kind === "subscriptions"
+      ? psOffer
+        ? {
+            label: `${psOffer.title}, ${psDurationTitle}`,
+            priceRub: psOffer.priceRub,
+          }
+        : null
+      : entry.kind === "plans"
+        ? plan
+          ? { label: plan.title, priceRub: plan.priceRub }
+          : null
+        : denomination
+          ? {
+              label: `${denomination.currency} ${denomination.amount}`,
+              priceRub: denomination.priceRub,
+            }
+          : null;
+  const productReady = entry.kind === "plans" || Boolean(region);
 
   function selectRegion(id: string) {
     setRegionId(id);
     setDenominationId(null);
     setPsOfferId(null);
+    setPlanId(null);
     setShowUsernameForm(false);
     setError("");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!platform || !region || !selected) {
+    if (!region || !selected) {
       return;
     }
 
@@ -146,7 +155,7 @@ export function OrderWizard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          platform: platform.title,
+          platform: entry.platformTitle,
           region: region.title,
           denomination: selected.label,
           priceRub: selected.priceRub,
@@ -183,16 +192,18 @@ export function OrderWizard() {
     );
   }
 
+  const productLabel =
+    entry.kind === "subscriptions"
+      ? "Подписки"
+      : entry.kind === "plans"
+        ? "Тариф"
+        : "Номинал";
+
   return (
     <div className="flex flex-col gap-7">
       <nav className="sticky top-0 z-20 -mx-4 flex gap-2 overflow-x-auto bg-[#0e0e10]/95 px-4 py-2">
-        <NavChip
-          label="Платформа"
-          onClick={() =>
-            platformRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-          }
-        />
-        {platform ? (
+        <NavChip label="← Меню" onClick={onBack} />
+        {needsRegion && !lockRegion ? (
           <NavChip
             label="Регион"
             onClick={() =>
@@ -200,9 +211,9 @@ export function OrderWizard() {
             }
           />
         ) : null}
-        {platform && region ? (
+        {productReady ? (
           <NavChip
-            label={isPlaystation ? "Подписки" : "Номинал"}
+            label={productLabel}
             onClick={() =>
               productRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
             }
@@ -218,25 +229,13 @@ export function OrderWizard() {
         ) : null}
       </nav>
 
-      <section ref={platformRef} className="scroll-mt-16">
-        <h1 className="text-xl font-semibold tracking-tight">Платформа</h1>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          {platforms.map((item) => (
-            <PlatformCard
-              key={item.id}
-              platform={item}
-              selected={item.id === platformId}
-              onSelect={() => selectPlatform(item.id)}
-            />
-          ))}
-        </div>
-      </section>
+      <p className="text-sm text-white/50">{entry.platformTitle}</p>
 
-      {platform ? (
+      {needsRegion && !lockRegion ? (
         <section ref={regionRef} className="scroll-mt-16">
           <h2 className="text-lg font-semibold">Регион</h2>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {regions.map((item) => (
+            {availableRegions.map((item) => (
               <button
                 key={item.id}
                 type="button"
@@ -255,9 +254,9 @@ export function OrderWizard() {
         </section>
       ) : null}
 
-      {platform && region ? (
+      {productReady ? (
         <section ref={productRef} className="scroll-mt-16">
-          {isPlaystation ? (
+          {entry.kind === "subscriptions" ? (
             <PsSubscriptions
               catalogId={psCatalogId}
               months={psMonths}
@@ -278,6 +277,24 @@ export function OrderWizard() {
                 setError("");
               }}
             />
+          ) : entry.kind === "plans" ? (
+            <>
+              <h2 className="text-lg font-semibold">Тариф</h2>
+              <div className="mt-3 flex flex-col gap-2">
+                {plans.map((item) => (
+                  <PlanCard
+                    key={item.id}
+                    item={item}
+                    selected={item.id === planId}
+                    onSelect={() => {
+                      setPlanId(item.id);
+                      setShowUsernameForm(false);
+                      setError("");
+                    }}
+                  />
+                ))}
+              </div>
+            </>
           ) : (
             <>
               <h2 className="text-lg font-semibold">Тип товара</h2>
@@ -306,7 +323,7 @@ export function OrderWizard() {
         </section>
       ) : null}
 
-      {platform && region && selected ? (
+      {productReady && selected ? (
         <section ref={payRef} className="scroll-mt-16 rounded-2xl bg-[#1c1c1f] p-4">
           <div className="flex items-end justify-between gap-3">
             <p className="text-sm text-white/60">К оплате</p>
@@ -392,31 +409,6 @@ function NavChip({
   );
 }
 
-function PlatformCard({
-  platform,
-  selected,
-  onSelect,
-}: {
-  platform: Platform;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`flex flex-col items-center gap-3 rounded-2xl bg-[#1c1c1f] px-3 py-5 ${
-        selected ? "ring-2 ring-[#ff9a3c]" : ""
-      }`}
-    >
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#2a2a2e] text-white">
-        <PlatformIcon icon={platform.icon} className="h-8 w-8" />
-      </span>
-      <span className="text-sm font-medium">{platform.title}</span>
-    </button>
-  );
-}
-
 function DenominationCard({
   item,
   selected,
@@ -441,6 +433,31 @@ function DenominationCard({
         {item.currency} {item.amount}
       </span>
       <span className="mt-1 block text-sm text-white/50">
+        {item.priceRub.toLocaleString("ru-RU")} ₽
+      </span>
+    </button>
+  );
+}
+
+function PlanCard({
+  item,
+  selected,
+  onSelect,
+}: {
+  item: PlanOffer;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`flex items-center justify-between gap-3 rounded-2xl bg-[#1c1c1f] p-4 text-left ${
+        selected ? "ring-2 ring-[#ff9a3c]" : ""
+      }`}
+    >
+      <span className="text-base font-medium">{item.title}</span>
+      <span className="shrink-0 text-base font-semibold">
         {item.priceRub.toLocaleString("ru-RU")} ₽
       </span>
     </button>

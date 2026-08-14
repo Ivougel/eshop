@@ -1,5 +1,5 @@
-import { OrderWizard } from "@/components/OrderWizard";
+import { ShopApp } from "@/components/ShopApp";
 
 export default function Home() {
-  return <OrderWizard />;
+  return <ShopApp />;
 }

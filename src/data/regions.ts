@@ -6,6 +6,7 @@ export type Region = {
 
 export const regions: Region[] = [
   { id: "tr", title: "Турция", flagIcon: "🇹🇷" },
+  { id: "in", title: "Индия", flagIcon: "🇮🇳" },
   { id: "pl", title: "Польша", flagIcon: "🇵🇱" },
   { id: "us", title: "США", flagIcon: "🇺🇸" },
   { id: "gb", title: "Великобритания", flagIcon: "🇬🇧" },
