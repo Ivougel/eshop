@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { runtimeEnv } from "@/lib/env";
 
 const USERNAME_RE = /^[A-Za-z0-9_]{5,32}$/;
 
@@ -74,9 +75,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = runtimeEnv("TELEGRAM_BOT_TOKEN");
   const managerChatId =
-    process.env.TELEGRAM_MANAGER_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+    runtimeEnv("TELEGRAM_MANAGER_CHAT_ID") || runtimeEnv("TELEGRAM_CHAT_ID");
 
   if (!token) {
     return NextResponse.json(

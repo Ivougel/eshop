@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { runtimeEnv } from "@/lib/env";
 
 type TelegramUpdate = {
   message?: {
@@ -8,7 +9,7 @@ type TelegramUpdate = {
 };
 
 function appUrl(request: Request): string {
-  const fromEnv = process.env.TELEGRAM_WEBAPP_URL?.replace(/\/$/, "");
+  const fromEnv = runtimeEnv("TELEGRAM_WEBAPP_URL").replace(/\/$/, "");
   if (fromEnv) {
     return fromEnv;
   }
@@ -21,7 +22,7 @@ function appUrl(request: Request): string {
 }
 
 async function sendStartMessage(chatId: number, webAppUrl: string) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = runtimeEnv("TELEGRAM_BOT_TOKEN");
   if (!token || !webAppUrl) {
     return;
   }
