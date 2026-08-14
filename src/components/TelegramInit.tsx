@@ -117,7 +117,11 @@ export function captureShopSession(): string {
   if (typeof window === "undefined") {
     return "";
   }
-  const sid = new URLSearchParams(window.location.search).get("sid")?.trim();
+  const fromQuery = new URLSearchParams(window.location.search).get("sid")?.trim();
+  const fromPath = decodeURIComponent(
+    window.location.pathname.match(/^\/s\/([^/]+)/)?.[1] ?? ""
+  ).trim();
+  const sid = fromQuery || fromPath;
   if (sid) {
     storageSet(SESSION_CACHE, sid);
     const id = Number(sid.split(".")[0]);

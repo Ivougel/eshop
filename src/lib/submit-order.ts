@@ -38,12 +38,21 @@ export async function submitOrder(input: {
         telegramSession,
       }),
     });
-    const data: {
+    const raw = await response.text();
+    let data: {
       success?: boolean;
       error?: string;
       orderId?: number;
       payUrl?: string;
-    } = await response.json();
+    } = {};
+    try {
+      data = raw ? (JSON.parse(raw) as typeof data) : {};
+    } catch {
+      return {
+        ok: false,
+        error: "Не удалось оформить заказ. Закройте магазин и откройте его из сообщения бота после /start.",
+      };
+    }
     if (!response.ok || !data.success || !data.orderId || !data.payUrl) {
       return { ok: false, error: data.error ?? "Не удалось оформить заказ" };
     }

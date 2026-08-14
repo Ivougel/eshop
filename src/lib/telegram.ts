@@ -18,14 +18,25 @@ export async function telegramCall(
   method: string,
   body: Record<string, unknown>
 ): Promise<{ ok: boolean; error?: string }> {
-  const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data: { ok?: boolean; description?: string } = await response.json();
-  if (response.ok && data.ok) {
-    return { ok: true };
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000),
+    });
+    const data = (await response.json().catch(() => ({}))) as {
+      ok?: boolean;
+      description?: string;
+    };
+    if (response.ok && data.ok) {
+      return { ok: true };
+    }
+    return { ok: false, error: data.description ?? `HTTP ${response.status}` };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "network",
+    };
   }
-  return { ok: false, error: data.description };
 }

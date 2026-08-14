@@ -24,7 +24,13 @@ export function signShopSession(userId: number): string {
 
 export function verifyShopSession(session: string): number | undefined {
   const token = runtimeEnv("TELEGRAM_BOT_TOKEN");
-  const [idRaw, expRaw, signature] = session.trim().split(".");
+  let raw = session.trim();
+  try {
+    raw = decodeURIComponent(raw);
+  } catch {
+    /* already decoded */
+  }
+  const [idRaw, expRaw, signature] = raw.split(".");
   if (!token || !idRaw || !expRaw || !signature) {
     return undefined;
   }
@@ -44,10 +50,10 @@ export function shopUrlWithSession(baseUrl: string, userId: number): string {
   if (!baseUrl) {
     return "";
   }
-  const url = new URL(baseUrl.includes("://") ? baseUrl : `https://${baseUrl}`);
+  const root = (baseUrl.includes("://") ? baseUrl : `https://${baseUrl}`).replace(
+    /\/$/,
+    ""
+  );
   const session = signShopSession(userId);
-  if (session) {
-    url.searchParams.set("sid", session);
-  }
-  return url.toString();
+  return session ? `${root}/s/${session}` : root;
 }
