@@ -11,6 +11,7 @@ type Props = {
   label: string;
   priceRub: number;
   onBack: () => void;
+  onHome: () => void;
 };
 
 export function CheckoutPanel({
@@ -19,6 +20,7 @@ export function CheckoutPanel({
   label,
   priceRub,
   onBack,
+  onHome,
 }: Props) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -42,7 +44,7 @@ export function CheckoutPanel({
   }
 
   if (created) {
-    return <OrderSuccess orderId={created.orderId} />;
+    return <OrderSuccess orderId={created.orderId} onDone={onHome} />;
   }
 
   return (

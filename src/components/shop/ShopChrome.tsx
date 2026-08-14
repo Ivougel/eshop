@@ -10,7 +10,6 @@ import {
   PlatformIcon,
   SbpIcon,
 } from "@/components/icons";
-import { closeMiniApp } from "@/components/TelegramInit";
 
 export type PayMethod = "sbp" | "crypto";
 export type ExtraKind = "none" | "promo" | "bonus";
@@ -316,7 +315,13 @@ export function GuideSteps({ steps }: { steps: string[] }) {
   );
 }
 
-export function OrderSuccess({ orderId }: { orderId: number }) {
+export function OrderSuccess({
+  orderId,
+  onDone,
+}: {
+  orderId: number;
+  onDone: () => void;
+}) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-5 backdrop-blur-[2px]">
       <div className="order-popup flex w-full max-w-[340px] flex-col items-center rounded-[28px] bg-[#1a1c23] px-6 py-8 text-center">
@@ -329,9 +334,12 @@ export function OrderSuccess({ orderId }: { orderId: number }) {
         <p className="mt-3 text-[13px] leading-5 text-[#8a92a8]">
           Чек отправлен в чат с ботом.
         </p>
+        <p className="mt-2 text-[13px] leading-5 text-[#8a92a8]">
+          Мы скоро с вами свяжемся
+        </p>
         <button
           type="button"
-          onClick={() => closeMiniApp()}
+          onClick={onDone}
           className="mt-6 h-12 w-full rounded-full bg-[#e2c27d] text-[15px] font-semibold text-[#1a1408] shadow-[0_0_24px_rgba(226,194,125,0.35)]"
         >
           Готово

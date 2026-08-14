@@ -220,6 +220,10 @@ export function ShopApp() {
         label={screen.item.title}
         priceRub={screen.item.priceRub}
         onBack={() => setScreen({ name: "store" })}
+        onHome={() => {
+          setTab("home");
+          setScreen({ name: "store" });
+        }}
       />
     );
   }

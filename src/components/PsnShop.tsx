@@ -92,7 +92,7 @@ export function PsnShop({
   }
 
   if (created) {
-    return <OrderSuccess orderId={created.orderId} />;
+    return <OrderSuccess orderId={created.orderId} onDone={onHome} />;
   }
 
   return (

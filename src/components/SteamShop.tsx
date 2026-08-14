@@ -76,7 +76,7 @@ export function SteamShop({ onHome, onFavorites, onCart, onProfile }: Props) {
   }
 
   if (created) {
-    return <OrderSuccess orderId={created.orderId} />;
+    return <OrderSuccess orderId={created.orderId} onDone={onHome} />;
   }
 
   return (
