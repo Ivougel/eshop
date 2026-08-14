@@ -1,8 +1,16 @@
-import { PlatformIcon } from "@/components/icons";
-import { getPsOffers, psCatalogs, psDurations, type PsOffer } from "@/data/ps-subscriptions";
+"use client";
 
-const tabActive = "bg-gradient-to-r from-[#ff4d6d] to-[#ff9a3c] text-white";
-const tabIdle = "bg-[#1c1c1f] text-white/80";
+import {
+  eaPlayFeatures,
+  getPsOffers,
+  psDurations,
+  psPlusFeatures,
+  type PsOffer,
+} from "@/data/ps-subscriptions";
+import { PlatformIcon } from "@/components/icons";
+
+const tabActive = "bg-[#d4af6a] text-[#0a0c12]";
+const tabIdle = "bg-white/[0.06] text-white/80";
 
 const tones: Record<PsOffer["tone"], string> = {
   gold: "bg-[#f3d27a] text-[#3b2a00]",
@@ -12,51 +20,25 @@ const tones: Record<PsOffer["tone"], string> = {
 };
 
 type Props = {
-  catalogId: string;
   months: number;
-  offerId: string | null;
-  onCatalog: (id: string) => void;
   onDuration: (months: number) => void;
-  onOffer: (id: string) => void;
+  onOffer: (offer: PsOffer) => void;
 };
 
-export function PsSubscriptions({
-  catalogId,
-  months,
-  offerId,
-  onCatalog,
-  onDuration,
-  onOffer,
-}: Props) {
-  const offers = getPsOffers(catalogId, months);
+export function PsSubscriptions({ months, onDuration, onOffer }: Props) {
+  const plusOffers = getPsOffers("ps-plus", months);
+  const eaOffer = getPsOffers("ea-play", months)[0];
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-lg font-semibold">Подписки</h2>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          {psCatalogs.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onCatalog(item.id)}
-              className={`h-14 rounded-2xl text-base font-semibold ${
-                item.id === catalogId ? tabActive : tabIdle
-              }`}
-            >
-              {item.title}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex flex-col gap-4">
+      <h2 className="text-lg font-semibold">Подписки</h2>
+      <div className="flex gap-2">
         {psDurations.map((item) => (
           <button
             key={item.months}
             type="button"
             onClick={() => onDuration(item.months)}
-            className={`shrink-0 rounded-2xl px-4 py-2.5 text-sm font-medium ${
+            className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium ${
               item.months === months ? tabActive : tabIdle
             }`}
           >
@@ -65,31 +47,69 @@ export function PsSubscriptions({
         ))}
       </div>
 
+      <p className="text-[12px] font-semibold tracking-wide text-[#8a92a8] uppercase">
+        PS Plus · главная подписка Sony
+      </p>
       <div className="flex flex-col gap-2">
-        {offers.map((offer) => (
+        {plusOffers.map((offer) => (
           <button
             key={offer.id}
             type="button"
-            onClick={() => onOffer(offer.id)}
-            className={`flex items-center gap-3 rounded-2xl bg-[#1c1c1f] p-3 text-left ${
-              offer.id === offerId ? "ring-2 ring-[#ff9a3c]" : ""
-            }`}
+            onClick={() => onOffer(offer)}
+            className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-left"
           >
             <span
-              className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl text-[8px] font-bold tracking-wide ${tones[offer.tone]}`}
+              className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl text-[8px] font-bold tracking-wide ${tones[offer.tone]}`}
             >
               <span>{offer.badge}</span>
               <PlatformIcon icon="playstation" className="mt-0.5 h-5 w-5" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-base font-medium">{offer.title}</span>
-            </span>
-            <span className="text-base font-semibold">
-              {offer.priceRub.toLocaleString("ru-RU")} ₽
+              <span className="flex items-start justify-between gap-2">
+                <span className="text-[15px] font-semibold">{offer.title}</span>
+                <span className="shrink-0 text-[15px] font-semibold">
+                  {offer.priceRub.toLocaleString("ru-RU")} ₽
+                </span>
+              </span>
+              <ul className="mt-1 space-y-0.5 text-[11px] text-[#8a92a8]">
+                {(psPlusFeatures[offer.badge] ?? []).slice(0, 3).map((line) => (
+                  <li key={line}>✓ {line}</li>
+                ))}
+              </ul>
             </span>
           </button>
         ))}
       </div>
+
+      {eaOffer ? (
+        <>
+          <p className="text-[12px] font-semibold tracking-wide text-[#8a92a8] uppercase">
+            EA Play · игры Electronic Arts
+          </p>
+          <button
+            type="button"
+            onClick={() => onOffer(eaOffer)}
+            className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-left"
+          >
+            <span className="flex items-start justify-between gap-2">
+              <span>
+                <span className="block text-[15px] font-semibold">EA Play</span>
+                <span className="mt-1 block text-[12px] text-[#8a92a8]">
+                  Каталог EA, пробный доступ и скидка 10%
+                </span>
+              </span>
+              <span className="shrink-0 text-[15px] font-semibold">
+                {eaOffer.priceRub.toLocaleString("ru-RU")} ₽
+              </span>
+            </span>
+            <ul className="mt-2 space-y-0.5 text-[11px] text-[#8a92a8]">
+              {eaPlayFeatures.slice(0, 3).map((line) => (
+                <li key={line}>✓ {line}</li>
+              ))}
+            </ul>
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }

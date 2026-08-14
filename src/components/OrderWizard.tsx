@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { getDenominations, type Denomination } from "@/data/denominations";
 import { getPlanOffers, type PlanOffer } from "@/data/plans";
-import { getPsOffers, psDurations } from "@/data/ps-subscriptions";
 import { regions } from "@/data/regions";
 import type { ShopEntry } from "@/data/home";
 import {
@@ -13,7 +12,6 @@ import {
   getTelegramUsername,
 } from "@/components/TelegramInit";
 import { SbpIcon } from "@/components/icons";
-import { PsSubscriptions } from "@/components/PsSubscriptions";
 
 const USERNAME_RE = /^[A-Za-z0-9_]{5,32}$/;
 
@@ -29,9 +27,6 @@ export function OrderWizard({
   );
   const [denominationId, setDenominationId] = useState<string | null>(null);
   const [planId, setPlanId] = useState<string | null>(null);
-  const [psCatalogId, setPsCatalogId] = useState("ps-plus");
-  const [psMonths, setPsMonths] = useState(1);
-  const [psOfferId, setPsOfferId] = useState<string | null>(null);
   const [showUsernameForm, setShowUsernameForm] = useState(false);
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
@@ -60,11 +55,11 @@ export function OrderWizard({
   }, [regionId, lockRegion, needsRegion]);
 
   useEffect(() => {
-    if (!denominationId && !psOfferId && !planId) {
+    if (!denominationId && !planId) {
       return;
     }
     payRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [denominationId, psOfferId, planId]);
+  }, [denominationId, planId]);
 
   useEffect(() => {
     if (!success) {
@@ -92,36 +87,22 @@ export function OrderWizard({
     offers.find((item) => item.id === denominationId) ?? null;
   const plans = entry.kind === "plans" ? getPlanOffers(entry.platformId) : [];
   const plan = plans.find((item) => item.id === planId) ?? null;
-  const psOffer =
-    getPsOffers(psCatalogId, psMonths).find((item) => item.id === psOfferId) ??
-    null;
-  const psDurationTitle =
-    psDurations.find((item) => item.months === psMonths)?.title ??
-    `${psMonths} мес.`;
   const selected =
-    entry.kind === "subscriptions"
-      ? psOffer
-        ? {
-            label: `${psOffer.title}, ${psDurationTitle}`,
-            priceRub: psOffer.priceRub,
-          }
+    entry.kind === "plans"
+      ? plan
+        ? { label: plan.title, priceRub: plan.priceRub }
         : null
-      : entry.kind === "plans"
-        ? plan
-          ? { label: plan.title, priceRub: plan.priceRub }
-          : null
-        : denomination
-          ? {
-              label: `${denomination.currency} ${denomination.amount}`,
-              priceRub: denomination.priceRub,
-            }
-          : null;
+      : denomination
+        ? {
+            label: `${denomination.currency} ${denomination.amount}`,
+            priceRub: denomination.priceRub,
+          }
+        : null;
   const productReady = entry.kind === "plans" || Boolean(region);
 
   function selectRegion(id: string) {
     setRegionId(id);
     setDenominationId(null);
-    setPsOfferId(null);
     setPlanId(null);
     setShowUsernameForm(false);
     setError("");
@@ -192,12 +173,7 @@ export function OrderWizard({
     );
   }
 
-  const productLabel =
-    entry.kind === "subscriptions"
-      ? "Подписки"
-      : entry.kind === "plans"
-        ? "Тариф"
-        : "Номинал";
+  const productLabel = entry.kind === "plans" ? "Тариф" : "Номинал";
 
   return (
     <div className="flex flex-col gap-7">
@@ -256,28 +232,7 @@ export function OrderWizard({
 
       {productReady ? (
         <section ref={productRef} className="scroll-mt-16">
-          {entry.kind === "subscriptions" ? (
-            <PsSubscriptions
-              catalogId={psCatalogId}
-              months={psMonths}
-              offerId={psOfferId}
-              onCatalog={(id) => {
-                setPsCatalogId(id);
-                setPsOfferId(null);
-                setShowUsernameForm(false);
-              }}
-              onDuration={(value) => {
-                setPsMonths(value);
-                setPsOfferId(null);
-                setShowUsernameForm(false);
-              }}
-              onOffer={(id) => {
-                setPsOfferId(id);
-                setShowUsernameForm(false);
-                setError("");
-              }}
-            />
-          ) : entry.kind === "plans" ? (
+          {entry.kind === "plans" ? (
             <>
               <h2 className="text-lg font-semibold">Тариф</h2>
               <div className="mt-3 flex flex-col gap-2">

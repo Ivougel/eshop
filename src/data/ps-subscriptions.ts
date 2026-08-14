@@ -30,21 +30,46 @@ export const psDurations: PsDuration[] = [
 ];
 
 export const psOffers: PsOffer[] = [
-  { id: "plus-ess-1", catalogId: "ps-plus", months: 1, title: "PS Plus Essential", badge: "ESSENTIAL", priceRub: 990, tone: "gold" },
-  { id: "plus-ext-1", catalogId: "ps-plus", months: 1, title: "PS Plus Extra", badge: "EXTRA", priceRub: 1490, tone: "orange" },
-  { id: "plus-dlx-1", catalogId: "ps-plus", months: 1, title: "PS Plus Deluxe", badge: "DELUXE", priceRub: 1790, tone: "dark" },
-  { id: "plus-ess-3", catalogId: "ps-plus", months: 3, title: "PS Plus Essential", badge: "ESSENTIAL", priceRub: 2690, tone: "gold" },
-  { id: "plus-ext-3", catalogId: "ps-plus", months: 3, title: "PS Plus Extra", badge: "EXTRA", priceRub: 3990, tone: "orange" },
-  { id: "plus-dlx-3", catalogId: "ps-plus", months: 3, title: "PS Plus Deluxe", badge: "DELUXE", priceRub: 4790, tone: "dark" },
-  { id: "plus-ess-12", catalogId: "ps-plus", months: 12, title: "PS Plus Essential", badge: "ESSENTIAL", priceRub: 7990, tone: "gold" },
-  { id: "plus-ext-12", catalogId: "ps-plus", months: 12, title: "PS Plus Extra", badge: "EXTRA", priceRub: 11990, tone: "orange" },
-  { id: "plus-dlx-12", catalogId: "ps-plus", months: 12, title: "PS Plus Deluxe", badge: "DELUXE", priceRub: 14990, tone: "dark" },
-  { id: "ea-1", catalogId: "ea-play", months: 1, title: "EA Play", badge: "PLAY", priceRub: 799, tone: "orange" },
-  { id: "ea-pro-1", catalogId: "ea-play", months: 1, title: "EA Play Pro", badge: "PRO", priceRub: 1490, tone: "blue" },
-  { id: "ea-3", catalogId: "ea-play", months: 3, title: "EA Play", badge: "PLAY", priceRub: 2190, tone: "orange" },
-  { id: "ea-pro-3", catalogId: "ea-play", months: 3, title: "EA Play Pro", badge: "PRO", priceRub: 3990, tone: "blue" },
-  { id: "ea-12", catalogId: "ea-play", months: 12, title: "EA Play", badge: "PLAY", priceRub: 6990, tone: "orange" },
-  { id: "ea-pro-12", catalogId: "ea-play", months: 12, title: "EA Play Pro", badge: "PRO", priceRub: 11990, tone: "blue" },
+  { id: "plus-ess-1", catalogId: "ps-plus", months: 1, title: "PS Plus Essential", badge: "ESSENTIAL", priceRub: 1295, tone: "gold" },
+  { id: "plus-ext-1", catalogId: "ps-plus", months: 1, title: "PS Plus Extra", badge: "EXTRA", priceRub: 1995, tone: "orange" },
+  { id: "plus-dlx-1", catalogId: "ps-plus", months: 1, title: "PS Plus Deluxe", badge: "DELUXE", priceRub: 2295, tone: "dark" },
+  { id: "plus-ess-3", catalogId: "ps-plus", months: 3, title: "PS Plus Essential", badge: "ESSENTIAL", priceRub: 3295, tone: "gold" },
+  { id: "plus-ext-3", catalogId: "ps-plus", months: 3, title: "PS Plus Extra", badge: "EXTRA", priceRub: 5195, tone: "orange" },
+  { id: "plus-dlx-3", catalogId: "ps-plus", months: 3, title: "PS Plus Deluxe", badge: "DELUXE", priceRub: 5995, tone: "dark" },
+  { id: "plus-ess-12", catalogId: "ps-plus", months: 12, title: "PS Plus Essential", badge: "ESSENTIAL", priceRub: 8495, tone: "gold" },
+  { id: "plus-ext-12", catalogId: "ps-plus", months: 12, title: "PS Plus Extra", badge: "EXTRA", priceRub: 13995, tone: "orange" },
+  { id: "plus-dlx-12", catalogId: "ps-plus", months: 12, title: "PS Plus Deluxe", badge: "DELUXE", priceRub: 15995, tone: "dark" },
+  { id: "ea-1", catalogId: "ea-play", months: 1, title: "EA Play", badge: "PLAY", priceRub: 795, tone: "orange" },
+  { id: "ea-3", catalogId: "ea-play", months: 3, title: "EA Play", badge: "PLAY", priceRub: 1995, tone: "orange" },
+  { id: "ea-12", catalogId: "ea-play", months: 12, title: "EA Play", badge: "PLAY", priceRub: 4595, tone: "orange" },
+];
+
+export const psPlusFeatures: Record<string, string[]> = {
+  ESSENTIAL: [
+    "Возможность играть по сети",
+    "Бесплатные игры месяца",
+    "Эксклюзивные скидки",
+    "Облачное хранилище",
+  ],
+  EXTRA: [
+    "Всё, что есть в Essential",
+    "Игровой каталог ~400 игр",
+    "Отдельный набор от Ubisoft",
+    "Облачное хранилище",
+  ],
+  DELUXE: [
+    "Всё, что входит в Essential",
+    "Всё, что входит в Extra",
+    "Каталог классических хитов Sony",
+    "Эксклюзивные демо-версии",
+  ],
+};
+
+export const eaPlayFeatures = [
+  "Каталог лучших игр EA",
+  "10 часов пробного доступа к новинкам",
+  "Скидка 10% на игры и донат EA",
+  "Ежемесячные награды и косметика",
 ];
 
 export function getPsOffers(catalogId: string, months: number): PsOffer[] {

@@ -26,6 +26,10 @@ export function PlatformIcon({
       return <AiIcon className={className} />;
     case "telegram":
       return <TelegramIcon className={className} />;
+    case "chat":
+      return <ChatIcon className={className} />;
+    case "star":
+      return <StarIcon className={className} />;
     default:
       return <span className={className} />;
   }
@@ -94,6 +98,75 @@ function TelegramIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
       <path d="M20.7 4.3 3.8 10.8c-1.1.4-1.1 1.1-.2 1.4l4.3 1.3 10.4-6.6c.5-.3.9-.1.6.2l-8.4 7.6-.3 4.4c.4 0 .6-.2.8-.4l2.1-2 4.3 3.2c.8.4 1.4.2 1.6-.7l2.8-13.3c.3-1.2-.4-1.8-1.1-1.6z" />
+    </svg>
+  );
+}
+
+function ChatIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM7 9h10v2H7V9zm6 5H7v-2h6v2zm4-6H7V6h10v2z" />
+    </svg>
+  );
+}
+
+function StarIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M12 3.2 14.4 8l5.3.8-3.8 3.7.9 5.3L12 15.3 7.2 17.8l.9-5.3L4.3 8.8 9.6 8 12 3.2z" />
+    </svg>
+  );
+}
+
+export function NavGlobeIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.5 2.8 3.8 6 3.8 9s-1.3 6.2-3.8 9c-2.5-2.8-3.8-6-3.8-9s1.3-6.2 3.8-9z" />
+    </svg>
+  );
+}
+
+export function NavHomeIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z" />
+    </svg>
+  );
+}
+
+export function NavSearchIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </svg>
+  );
+}
+
+export function NavHeartIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
+    </svg>
+  );
+}
+
+export function NavCartIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <circle cx="9" cy="20" r="1.2" />
+      <circle cx="18" cy="20" r="1.2" />
+      <path d="M3 4h2.2l2.1 11h11.2l1.8-7H7" />
+    </svg>
+  );
+}
+
+export function NavProfileIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <circle cx="12" cy="8" r="3.2" />
+      <path d="M5 19c.8-3 3.4-5 7-5s6.2 2 7 5" />
     </svg>
   );
 }

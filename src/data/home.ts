@@ -120,10 +120,25 @@ export const homeServices: HomeService[] = [
 
 export const homeChannels = [
   {
-    id: "telegram",
-    title: "Telegram",
+    id: "channel",
+    title: "Канал",
+    subtitle: "Новости, скидки, релизы",
     href: "https://t.me/icity_eshop_bot",
     icon: "telegram",
+  },
+  {
+    id: "support",
+    title: "Поддержка",
+    subtitle: "Помощь по заказам",
+    href: "https://t.me/icity_eshop_bot",
+    icon: "chat",
+  },
+  {
+    id: "reviews",
+    title: "Отзывы",
+    subtitle: "Опыт клиентов",
+    href: "https://t.me/icity_eshop_bot",
+    icon: "star",
   },
 ];
 
