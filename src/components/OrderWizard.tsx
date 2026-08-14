@@ -1,10 +1,14 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { getDenominations, type Denomination } from "@/data/denominations";
 import { platforms, type Platform } from "@/data/platforms";
 import { regions } from "@/data/regions";
-import { getTelegramUserId } from "@/components/TelegramInit";
+import {
+  closeMiniApp,
+  getTelegramUserId,
+  getTelegramUsername,
+} from "@/components/TelegramInit";
 import { PlatformIcon, SbpIcon } from "@/components/icons";
 
 const USERNAME_RE = /^[A-Za-z0-9_]{5,32}$/;
@@ -18,6 +22,13 @@ export function OrderWizard() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    const fromTelegram = getTelegramUsername();
+    if (fromTelegram) {
+      setUsername(fromTelegram);
+    }
+  }, []);
 
   const platform = platforms.find((item) => item.id === platformId) ?? null;
   const region = regions.find((item) => item.id === regionId) ?? null;
@@ -79,6 +90,7 @@ export function OrderWizard() {
       }
 
       setSuccess(true);
+      closeMiniApp();
     } catch {
       setError("Не удалось оформить заказ");
     } finally {

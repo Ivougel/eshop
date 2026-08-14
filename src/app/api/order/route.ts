@@ -75,40 +75,51 @@ export async function POST(request: Request) {
   }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const managerChatId = process.env.TELEGRAM_MANAGER_CHAT_ID;
+  const managerChatId =
+    process.env.TELEGRAM_MANAGER_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
 
-  if (!token || !managerChatId) {
+  if (!token) {
     return NextResponse.json(
       { success: false, error: "Сервер не настроен" },
       { status: 500 }
     );
   }
 
-  const managerText = `Новый заказ:
+  const orderText = `Новый заказ:
 Платформа: ${platform}
 Регион: ${region}
 Номинал: ${denomination}
 Сумма: ${priceRub} ₽
 Telegram клиента: @${telegramUsername}`;
 
-  const managerSent = await sendTelegramMessage(
-    token,
-    managerChatId,
-    managerText
-  );
+  const clientText = `Ваш заказ оформлен:
 
-  if (!managerSent) {
-    return NextResponse.json(
-      { success: false, error: "Не удалось отправить заказ" },
-      { status: 502 }
-    );
+Платформа: ${platform}
+Регион: ${region}
+Номинал: ${denomination}
+Сумма: ${priceRub} ₽
+
+Менеджер свяжется с вами в ближайшее время.`;
+
+  let delivered = false;
+
+  if (managerChatId) {
+    delivered = await sendTelegramMessage(token, managerChatId, orderText);
   }
 
   if (Number.isFinite(telegramUserId) && telegramUserId > 0) {
-    await sendTelegramMessage(
+    const clientSent = await sendTelegramMessage(
       token,
       telegramUserId,
-      "Ваш заказ оформлен. Менеджер свяжется с вами в ближайшее время."
+      clientText
+    );
+    delivered = delivered || clientSent;
+  }
+
+  if (!delivered) {
+    return NextResponse.json(
+      { success: false, error: "Не удалось отправить заказ" },
+      { status: 502 }
     );
   }
 

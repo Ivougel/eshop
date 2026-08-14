@@ -10,6 +10,7 @@ type TelegramUser = {
 type TelegramWebApp = {
   ready: () => void;
   expand: () => void;
+  close: () => void;
   initDataUnsafe?: {
     user?: TelegramUser;
   };
@@ -25,6 +26,14 @@ declare global {
 
 export function getTelegramUserId(): number | undefined {
   return window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+}
+
+export function getTelegramUsername(): string | undefined {
+  return window.Telegram?.WebApp?.initDataUnsafe?.user?.username;
+}
+
+export function closeMiniApp() {
+  window.Telegram?.WebApp?.close();
 }
 
 export function TelegramInit() {
