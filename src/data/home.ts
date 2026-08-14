@@ -118,26 +118,29 @@ export const homeServices: HomeService[] = [
   },
 ];
 
+export const botUsername = "icity_eshop_bot";
+export const botUrl = `https://t.me/${botUsername}`;
+
 export const homeChannels = [
   {
     id: "channel",
     title: "Канал",
     subtitle: "Новости, скидки, релизы",
-    href: "https://t.me/icity_eshop_bot",
+    href: botUrl,
     icon: "telegram",
   },
   {
     id: "support",
     title: "Поддержка",
     subtitle: "Помощь по заказам",
-    href: "https://t.me/icity_eshop_bot",
+    href: botUrl,
     icon: "chat",
   },
   {
     id: "reviews",
     title: "Отзывы",
     subtitle: "Опыт клиентов",
-    href: "https://t.me/icity_eshop_bot",
+    href: botUrl,
     icon: "star",
   },
 ];

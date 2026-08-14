@@ -32,8 +32,7 @@ type Screen =
   | { name: "store" }
   | { name: "service"; entry: ShopEntry }
   | { name: "game"; gameId: string }
-  | { name: "checkout"; item: CheckoutItem }
-  | { name: "cabinet" };
+  | { name: "checkout"; item: CheckoutItem };
 
 export function ShopApp() {
   const [screen, setScreen] = useState<Screen>({ name: "landing" });
@@ -109,7 +108,10 @@ export function ShopApp() {
   if (screen.name === "landing") {
     return (
       <HomeMenu
-        onCabinet={() => setScreen({ name: "cabinet" })}
+        onCabinet={() => {
+          setTab("profile");
+          setScreen({ name: "store" });
+        }}
         onOpenRegion={(id) => {
           setRegionId(id);
           setTab("home");
@@ -117,14 +119,6 @@ export function ShopApp() {
         }}
         onOpenService={(entry) => setScreen({ name: "service", entry })}
       />
-    );
-  }
-
-  if (screen.name === "cabinet") {
-    return (
-      <div className="px-[22px] py-4">
-        <Cabinet onBack={() => setScreen({ name: "landing" })} />
-      </div>
     );
   }
 
@@ -367,7 +361,10 @@ export function ShopApp() {
   if (tab === "profile") {
     return storeShell(
       <div className="px-[22px] pt-4 pb-24">
-        <Cabinet onBack={() => setTab("home")} />
+        <Cabinet
+          regionId={regionId}
+          onFavorites={() => setTab("favorites")}
+        />
       </div>
     );
   }

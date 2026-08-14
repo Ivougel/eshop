@@ -2,7 +2,6 @@
 
 import {
   NavCartIcon,
-  NavGlobeIcon,
   NavHeartIcon,
   NavHomeIcon,
   NavProfileIcon,
@@ -32,15 +31,7 @@ export function BottomNav({
   const idle = "text-[#8a92a8]";
 
   return (
-    <nav className="fixed right-0 bottom-0 left-0 z-30 mx-auto flex w-full max-w-[420px] items-end justify-around border-t border-white/10 bg-[#08090c]/95 px-2 pt-2 pb-[max(10px,env(safe-area-inset-bottom))] backdrop-blur-xl">
-      <button type="button" onClick={onRegion} className={`flex flex-col items-center gap-1 ${idle}`}>
-        <span className="relative">
-          <NavGlobeIcon className="h-5 w-5" />
-          <span className="absolute -right-1 -bottom-0.5 text-[10px] leading-none">
-            {region?.flagIcon ?? "🌐"}
-          </span>
-        </span>
-      </button>
+    <nav className="fixed right-0 bottom-0 left-0 z-30 mx-auto flex w-full max-w-[420px] items-end justify-around border-t border-white/10 bg-[#08090c]/95 px-1 pt-2 pb-[max(10px,env(safe-area-inset-bottom))] backdrop-blur-xl">
       <TabButton
         label="Главная"
         active={tab === "home"}
@@ -81,14 +72,22 @@ export function BottomNav({
       >
         <NavProfileIcon className={`h-5 w-5 ${tab === "profile" ? active : idle}`} />
       </TabButton>
+      <button type="button" onClick={onRegion} className="flex flex-col items-center gap-0.5 px-1 py-1">
+        <span className="flex items-center gap-1 rounded-full border border-white/15 px-2 py-0.5 text-[11px] font-semibold text-white">
+          <span>{region?.flagIcon ?? "🌐"}</span>
+          <span>{region?.id.toUpperCase() ?? "TR"}</span>
+        </span>
+        <span className="text-[10px] text-[#8a92a8]">Регион</span>
+      </button>
     </nav>
   );
 }
 
 function TabButton({
   label,
-  children,
+  active,
   onClick,
+  children,
 }: {
   label: string;
   active: boolean;
@@ -100,9 +99,12 @@ function TabButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex flex-col items-center px-1 py-1"
+      className="flex flex-col items-center gap-0.5 px-1 py-1"
     >
       {children}
+      <span className={`text-[10px] ${active ? "text-[#d4af6a]" : "text-[#8a92a8]"}`}>
+        {label}
+      </span>
     </button>
   );
 }

@@ -5,6 +5,8 @@ import { useEffect } from "react";
 type TelegramUser = {
   id: number;
   username?: string;
+  first_name?: string;
+  last_name?: string;
 };
 
 type TelegramWebApp = {
@@ -66,6 +68,18 @@ export function getTelegramUserId(): number | undefined {
 
 export function getTelegramUsername(): string | undefined {
   return getTelegramUser()?.username;
+}
+
+export function getTelegramDisplayName(): string {
+  const user = getTelegramUser();
+  const name = [user?.first_name, user?.last_name].filter(Boolean).join(" ");
+  if (name) {
+    return name;
+  }
+  if (user?.username) {
+    return user.username;
+  }
+  return "Гость";
 }
 
 export function getTelegramInitData(): string {

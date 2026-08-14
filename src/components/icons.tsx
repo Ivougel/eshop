@@ -181,6 +181,63 @@ export function NavProfileIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
+export function CopyIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+export function KeyIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <circle cx="8" cy="15" r="4" />
+      <path d="M11.2 12.8 20 4v4M16 4h4" />
+    </svg>
+  );
+}
+
+export function InfoIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 10v6M12 7.5h.01" />
+    </svg>
+  );
+}
+
+export function BagIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M6 8h12l1 12H5L6 8z" />
+      <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+    </svg>
+  );
+}
+
+export function UsersIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3.5 19c.6-3 2.8-5 5.5-5s4.9 2 5.5 5" />
+      <circle cx="17" cy="9" r="2.4" />
+      <path d="M16 14.2c2 .4 3.6 1.8 4.2 4.3" />
+    </svg>
+  );
+}
+
+export function WalletIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3H6.5A2.5 2.5 0 0 1 4 7.5z" />
+      <path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z" />
+      <circle cx="16.5" cy="13" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function ChevronIcon({ className = "h-4 w-4" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
