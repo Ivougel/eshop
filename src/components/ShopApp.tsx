@@ -9,6 +9,8 @@ import { GameCard } from "@/components/GameCard";
 import { HomeMenu } from "@/components/HomeMenu";
 import { NavHeartIcon } from "@/components/icons";
 import { OrderWizard } from "@/components/OrderWizard";
+import { PsnShop } from "@/components/PsnShop";
+import { XboxShop } from "@/components/XboxShop";
 import type { CheckoutItem } from "@/data/cart";
 import { getGameById, searchGames, type Game } from "@/data/games";
 import { homeRegions, type ShopEntry } from "@/data/home";
@@ -123,6 +125,37 @@ export function ShopApp() {
   }
 
   if (screen.name === "service") {
+    const goStore = (next: StoreTab) => {
+      setTab(next);
+      setScreen({ name: "store" });
+    };
+
+    if (screen.entry.platformId === "xbox") {
+      return (
+        <XboxShop
+          onHome={() => setScreen({ name: "landing" })}
+          onFavorites={() => goStore("favorites")}
+          onCart={() => goStore("cart")}
+          onProfile={() => goStore("profile")}
+        />
+      );
+    }
+
+    if (screen.entry.platformId === "playstation" && screen.entry.kind === "cards") {
+      return (
+        <PsnShop
+          onHome={() => setScreen({ name: "landing" })}
+          onFavorites={() => goStore("favorites")}
+          onCart={() => goStore("cart")}
+          onProfile={() => goStore("profile")}
+          onSubscriptions={() => {
+            setTab("home");
+            setScreen({ name: "store" });
+          }}
+        />
+      );
+    }
+
     return (
       <div className="px-[22px] py-4">
         <OrderWizard

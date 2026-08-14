@@ -78,7 +78,7 @@ function SteamIcon({ className }: IconProps) {
   );
 }
 
-function XboxIcon({ className }: IconProps) {
+export function XboxIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
       <path d="M7.2 4.4C8.6 3.5 10.2 3 12 3c1.8 0 3.4.5 4.8 1.4C15.2 6.6 13.5 9.4 12 11.8 10.5 9.4 8.8 6.6 7.2 4.4zM4.2 7.1C3.4 8.5 3 10.2 3 12c0 3.6 2.1 6.7 5.1 8.1C6.6 17 5.2 12.8 5.2 9.4c0-.8.1-1.5.3-2.3h-1.3zm15.6 0h-1.3c.2.8.3 1.5.3 2.3 0 3.4-1.4 7.6-2.9 10.7 3-1.4 5.1-4.5 5.1-8.1 0-1.8-.4-3.5-1.2-4.9zM12 13.6c1.4 2.2 3.3 5.2 4.4 7.1-1.4.6-2.9.9-4.4.9s-3-.3-4.4-.9c1.1-1.9 3-4.9 4.4-7.1z" />
@@ -175,6 +175,18 @@ export function ChevronIcon({ className = "h-4 w-4" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
       <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+export function BitcoinIcon({ className = "h-6 w-6" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="#f7931a" aria-hidden>
+      <circle cx="12" cy="12" r="10" />
+      <path
+        d="M13.2 7.1c1.6.3 2.6 1.3 2.6 2.7 0 1.1-.6 1.9-1.6 2.3 1.3.4 2.1 1.3 2.1 2.7 0 1.8-1.4 2.9-3.5 3.2v1.5h-1.5v-1.4h-1.2v1.4H8.6v-1.5H6.8v-1.3h1.2V8.6H6.8V7.3h1.8V5.9h1.5v1.3h1.2V5.9h1.5v1.2zm-3.1 4.4h1.9c1.1 0 1.7-.5 1.7-1.3s-.6-1.3-1.8-1.3h-1.8v2.6zm0 1.4v2.9h2.1c1.2 0 1.9-.6 1.9-1.5s-.8-1.4-2.1-1.4h-1.9z"
+        fill="#fff"
+      />
     </svg>
   );
 }
