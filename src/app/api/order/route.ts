@@ -76,8 +76,6 @@ export async function POST(request: Request) {
   }
 
   const token = runtimeEnv("TELEGRAM_BOT_TOKEN");
-  const managerChatId =
-    runtimeEnv("TELEGRAM_MANAGER_CHAT_ID") || runtimeEnv("TELEGRAM_CHAT_ID");
 
   if (!token) {
     return NextResponse.json(
@@ -86,36 +84,21 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!Number.isFinite(telegramUserId) || telegramUserId <= 0) {
+    return NextResponse.json(
+      { success: false, error: "Откройте магазин внутри Telegram" },
+      { status: 400 }
+    );
+  }
+
   const orderText = `Новый заказ:
 Платформа: ${platform}
 Регион: ${region}
 Номинал: ${denomination}
 Сумма: ${priceRub} ₽
-Telegram клиента: @${telegramUsername}`;
+Telegram: @${telegramUsername}`;
 
-  const clientText = `Ваш заказ оформлен:
-
-Платформа: ${platform}
-Регион: ${region}
-Номинал: ${denomination}
-Сумма: ${priceRub} ₽
-
-Менеджер свяжется с вами в ближайшее время.`;
-
-  let delivered = false;
-
-  if (managerChatId) {
-    delivered = await sendTelegramMessage(token, managerChatId, orderText);
-  }
-
-  if (Number.isFinite(telegramUserId) && telegramUserId > 0) {
-    const clientSent = await sendTelegramMessage(
-      token,
-      telegramUserId,
-      clientText
-    );
-    delivered = delivered || clientSent;
-  }
+  const delivered = await sendTelegramMessage(token, telegramUserId, orderText);
 
   if (!delivered) {
     return NextResponse.json(
