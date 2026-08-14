@@ -110,21 +110,21 @@ function RegionCard({
     <button
       type="button"
       onClick={onSelect}
-      className="relative flex min-h-[228px] flex-col items-start overflow-hidden rounded-[20px] border border-white/[0.09] bg-white/[0.035] p-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+      className="relative flex flex-col items-start overflow-hidden rounded-[20px] border border-white/[0.09] bg-white/[0.035] px-4 pt-4 pb-5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
     >
+      <span className="absolute top-3.5 right-3 rounded-md border border-[#d4af6a]/25 bg-[#d4af6a]/12 px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.1em] text-[#d4af6a] uppercase">
+        {item.badge}
+      </span>
       <span
-        className="text-[56px] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.35)]"
+        className="block text-[44px] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.35)]"
         aria-hidden
       >
         {item.flagIcon}
       </span>
-      <span className="absolute top-3.5 right-3 rounded-md border border-[#d4af6a]/25 bg-[#d4af6a]/12 px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.1em] text-[#d4af6a] uppercase">
-        {item.badge}
-      </span>
-      <span className="mt-auto text-[22px] leading-none font-bold tracking-tight">
+      <span className="mt-3 text-[22px] leading-none font-bold tracking-tight">
         {item.title}
       </span>
-      <span className="mt-2 line-clamp-3 text-[12px] leading-[1.35] text-[#8a92a8]">
+      <span className="mt-1.5 text-[12px] leading-[1.35] text-[#8a92a8]">
         {item.description}
       </span>
     </button>
