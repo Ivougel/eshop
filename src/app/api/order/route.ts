@@ -7,6 +7,7 @@ import {
   payKeyboard,
   payUrlFor,
 } from "@/lib/orders";
+import { chatIdByUserId } from "@/lib/chats";
 import { appUrlFrom, telegramCall } from "@/lib/telegram";
 
 type OrderBody = {
@@ -20,9 +21,23 @@ type OrderBody = {
 
 function userIdFromInitData(initData: string): number | undefined {
   try {
-    const userRaw = new URLSearchParams(initData).get("user");
+    const raw = initData.trim();
+    if (!raw) {
+      return undefined;
+    }
+    const direct = new URLSearchParams(raw);
+    let userRaw = direct.get("user");
+    if (!userRaw) {
+      const nested = direct.get("tgWebAppData");
+      if (nested) {
+        userRaw = new URLSearchParams(nested).get("user");
+      }
+    }
     if (!userRaw) {
       return undefined;
+    }
+    if (userRaw.includes("user=")) {
+      return userIdFromInitData(userRaw);
     }
     const user = JSON.parse(userRaw) as { id?: number | string };
     const id = Number(user.id);
@@ -59,10 +74,11 @@ export async function POST(request: Request) {
     typeof body.telegramUserId === "number"
       ? body.telegramUserId
       : Number.parseInt(asText(body.telegramUserId), 10);
-  const chatId =
+  const parsedId =
     Number.isFinite(telegramUserId) && telegramUserId > 0
       ? telegramUserId
       : userIdFromInitData(asText(body.telegramInitData));
+  const chatId = parsedId ? chatIdByUserId(parsedId) : undefined;
 
   if (!platform || !region || !denomination || !Number.isFinite(priceRub)) {
     return NextResponse.json(

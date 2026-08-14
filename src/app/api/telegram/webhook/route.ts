@@ -44,7 +44,11 @@ export async function POST(request: Request) {
   const chatId = update.message?.chat.id;
 
   if (chatId) {
-    rememberChat(chatId, update.message?.from?.username);
+    rememberChat(
+      chatId,
+      update.message?.from?.username,
+      update.message?.from?.id
+    );
   }
 
   if (token && chatId && text.startsWith("/start")) {

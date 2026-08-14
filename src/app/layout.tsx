@@ -26,10 +26,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ru" className={`${geist.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full bg-[#08090c] font-sans text-white" suppressHydrationWarning>
-        <Script
-          src="https://telegram.org/js/telegram-web-app.js"
-          strategy="beforeInteractive"
-        />
+        <Script id="icity-tg-capture" strategy="beforeInteractive">
+          {`(function(){try{var h=location.hash.replace(/^#/,"");var q=location.search.replace(/^\\?/,"");function pick(s){if(!s)return"";var p=new URLSearchParams(s);var d=p.get("tgWebAppData");if(d)return d;if(p.get("user")&&p.get("hash"))return s;return""}var d=pick(h)||pick(q);if(!d)return;sessionStorage.setItem("icity-tg-init",d);var u=new URLSearchParams(d).get("user");if(u)sessionStorage.setItem("icity-tg-user",u);}catch(e){}})();`}
+        </Script>
         <TelegramInit />
         <main className="mx-auto w-full max-w-[420px]">{children}</main>
       </body>

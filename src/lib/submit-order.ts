@@ -15,10 +15,12 @@ export async function submitOrder(input: {
   priceRub: number;
 }): Promise<{ ok: boolean; order?: CreatedOrder; error?: string }> {
   let telegramUserId = getTelegramUserId();
+  let telegramInitData = getTelegramInitData();
   if (!telegramUserId) {
-    for (let attempt = 0; attempt < 12 && !telegramUserId; attempt += 1) {
-      await new Promise((resolve) => window.setTimeout(resolve, 80));
+    for (let attempt = 0; attempt < 25 && !telegramUserId; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 100));
       telegramUserId = getTelegramUserId();
+      telegramInitData = getTelegramInitData() || telegramInitData;
     }
   }
 
@@ -29,7 +31,7 @@ export async function submitOrder(input: {
       body: JSON.stringify({
         ...input,
         telegramUserId,
-        telegramInitData: getTelegramInitData(),
+        telegramInitData,
       }),
     });
     const data: {
