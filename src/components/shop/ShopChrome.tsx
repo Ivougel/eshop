@@ -14,9 +14,11 @@ import {
 export type PayMethod = "sbp" | "crypto";
 export type ExtraKind = "none" | "promo" | "bonus";
 
+type Brand = "xbox" | "steam" | "apple" | "roblox" | "ai";
+
 type NavProps = {
-  active: "xbox" | "steam" | "region" | "home" | "favorites" | "cart" | "profile";
-  brand?: "xbox" | "steam";
+  active: Brand | "region" | "home" | "favorites" | "cart" | "profile";
+  brand?: Brand;
   regionFlag?: string;
   regionCode?: string;
   onHome: () => void;
@@ -62,22 +64,36 @@ export function ServiceNav({
           </span>
           <span className="text-[10px] text-[#8a92a8]">Регион</span>
         </button>
-      ) : brand === "steam" ? (
-        <button type="button" onClick={onFifth} className="flex flex-col items-center gap-0.5 px-1 py-1">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d4af6a]/20 text-[#d4af6a]">
-            <PlatformIcon icon="steam" className="h-4 w-4" />
-          </span>
-          <span className="text-[10px] font-medium text-[#d4af6a]">Steam</span>
-        </button>
       ) : (
-        <button type="button" onClick={onFifth} className="flex flex-col items-center gap-0.5 px-1 py-1">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#107c10] text-white">
-            <PlatformIcon icon="xbox" className="h-4 w-4" />
-          </span>
-          <span className="text-[10px] font-medium text-[#d4af6a]">Xbox</span>
-        </button>
+        <BrandTab brand={brand} onClick={onFifth} />
       )}
     </nav>
+  );
+}
+
+function BrandTab({ brand, onClick }: { brand: Brand; onClick: () => void }) {
+  const labels: Record<Brand, string> = {
+    xbox: "Xbox",
+    steam: "Steam",
+    apple: "App Store",
+    roblox: "Roblox",
+    ai: "Нейро",
+  };
+  const wraps: Record<Brand, string> = {
+    xbox: "bg-[#107c10] text-white",
+    steam: "bg-[#d4af6a]/20 text-[#d4af6a]",
+    apple: "bg-white/10 text-white shadow-[0_0_14px_rgba(212,175,106,0.55)]",
+    roblox: "bg-[#e2231a]/50 text-white shadow-[0_0_14px_rgba(226,35,26,0.7)]",
+    ai: "bg-white/10 text-[#d4af6a] shadow-[0_0_14px_rgba(212,175,106,0.45)]",
+  };
+
+  return (
+    <button type="button" onClick={onClick} className="flex flex-col items-center gap-0.5 px-1 py-1">
+      <span className={`flex h-7 w-7 items-center justify-center rounded-full ${wraps[brand]}`}>
+        <PlatformIcon icon={brand === "apple" ? "apple" : brand === "ai" ? "ai" : brand} className="h-4 w-4" />
+      </span>
+      <span className="text-[10px] font-medium text-[#d4af6a]">{labels[brand]}</span>
+    </button>
   );
 }
 
@@ -245,6 +261,57 @@ export function PayButton({
     >
       {pending ? "Отправка…" : label}
     </button>
+  );
+}
+
+export function QtyStepper({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-full bg-[#152238] px-3 py-1.5 ${
+        disabled ? "opacity-40" : "text-[#60a5fa]"
+      }`}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange(Math.max(0, value - 1))}
+        className="text-lg leading-none"
+      >
+        −
+      </button>
+      <span className="min-w-4 text-center text-sm text-white">{value}</span>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange(value + 1)}
+        className="text-lg leading-none"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+export function GuideSteps({ steps }: { steps: string[] }) {
+  return (
+    <ol className="divide-y divide-white/10">
+      {steps.map((step, index) => (
+        <li key={step} className="flex gap-3 py-3">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b82f6] text-[12px] font-semibold">
+            {index + 1}
+          </span>
+          <span className="text-[13px] leading-5">{step}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 

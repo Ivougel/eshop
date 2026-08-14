@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AiShop } from "@/components/AiShop";
+import { AppStoreShop } from "@/components/AppStoreShop";
 import { BottomNav, type StoreTab } from "@/components/BottomNav";
 import { Cabinet } from "@/components/Cabinet";
 import { CatalogHome } from "@/components/CatalogHome";
@@ -10,6 +12,7 @@ import { HomeMenu } from "@/components/HomeMenu";
 import { NavHeartIcon } from "@/components/icons";
 import { OrderWizard } from "@/components/OrderWizard";
 import { PsnShop } from "@/components/PsnShop";
+import { RobloxShop } from "@/components/RobloxShop";
 import { SteamShop } from "@/components/SteamShop";
 import { XboxShop } from "@/components/XboxShop";
 import type { CheckoutItem } from "@/data/cart";
@@ -145,6 +148,39 @@ export function ShopApp() {
     if (screen.entry.platformId === "steam") {
       return (
         <SteamShop
+          onHome={() => setScreen({ name: "landing" })}
+          onFavorites={() => goStore("favorites")}
+          onCart={() => goStore("cart")}
+          onProfile={() => goStore("profile")}
+        />
+      );
+    }
+
+    if (screen.entry.platformId === "apple") {
+      return (
+        <AppStoreShop
+          onHome={() => setScreen({ name: "landing" })}
+          onFavorites={() => goStore("favorites")}
+          onCart={() => goStore("cart")}
+          onProfile={() => goStore("profile")}
+        />
+      );
+    }
+
+    if (screen.entry.platformId === "roblox") {
+      return (
+        <RobloxShop
+          onHome={() => setScreen({ name: "landing" })}
+          onFavorites={() => goStore("favorites")}
+          onCart={() => goStore("cart")}
+          onProfile={() => goStore("profile")}
+        />
+      );
+    }
+
+    if (screen.entry.platformId === "ai") {
+      return (
+        <AiShop
           onHome={() => setScreen({ name: "landing" })}
           onFavorites={() => goStore("favorites")}
           onCart={() => goStore("cart")}

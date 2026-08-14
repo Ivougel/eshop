@@ -24,6 +24,8 @@ export function PlatformIcon({
       return <XboxIcon className={className} />;
     case "ai":
       return <AiIcon className={className} />;
+    case "claude":
+      return <ClaudeIcon className={className} />;
     case "telegram":
       return <TelegramIcon className={className} />;
     case "chat":
@@ -90,6 +92,14 @@ function AiIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
       <path d="M12.4 3.1 15 8.4l5.7.5-4.3 3.8 1.3 5.6-5.3-3.1-5.3 3.1 1.3-5.6L4 8.9l5.7-.5 2.7-5.3z" />
+    </svg>
+  );
+}
+
+function ClaudeIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M12 3.2 13.7 8l4.9.4-3.7 3.2 1.1 4.8L12 13.8 7.9 16.4l1.1-4.8-3.7-3.2 4.9-.4L12 3.2z" />
     </svg>
   );
 }
