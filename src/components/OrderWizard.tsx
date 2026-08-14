@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { getDenominations, type Denomination } from "@/data/denominations";
 import { platforms, type Platform } from "@/data/platforms";
+import { getPsOffers, psDurations } from "@/data/ps-subscriptions";
 import { regions } from "@/data/regions";
 import {
   closeMiniApp,
@@ -11,6 +12,7 @@ import {
   getTelegramUsername,
 } from "@/components/TelegramInit";
 import { PlatformIcon, SbpIcon } from "@/components/icons";
+import { PsSubscriptions } from "@/components/PsSubscriptions";
 
 const USERNAME_RE = /^[A-Za-z0-9_]{5,32}$/;
 
@@ -18,6 +20,9 @@ export function OrderWizard() {
   const [platformId, setPlatformId] = useState<string | null>(null);
   const [regionId, setRegionId] = useState<string | null>(null);
   const [denominationId, setDenominationId] = useState<string | null>(null);
+  const [psCatalogId, setPsCatalogId] = useState("ps-plus");
+  const [psMonths, setPsMonths] = useState(1);
+  const [psOfferId, setPsOfferId] = useState<string | null>(null);
   const [showUsernameForm, setShowUsernameForm] = useState(false);
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
@@ -51,11 +56,11 @@ export function OrderWizard() {
   }, [regionId]);
 
   useEffect(() => {
-    if (!denominationId) {
+    if (!denominationId && !psOfferId) {
       return;
     }
     payRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [denominationId]);
+  }, [denominationId, psOfferId]);
 
   useEffect(() => {
     if (!success) {
@@ -73,11 +78,34 @@ export function OrderWizard() {
   );
   const denomination =
     offers.find((item) => item.id === denominationId) ?? null;
+  const isPlaystation = platformId === "playstation";
+  const psOffer =
+    getPsOffers(psCatalogId, psMonths).find((item) => item.id === psOfferId) ??
+    null;
+  const psDurationTitle =
+    psDurations.find((item) => item.months === psMonths)?.title ??
+    `${psMonths} мес.`;
+  const selected = isPlaystation
+    ? psOffer
+      ? {
+          label: `${psOffer.title}, ${psDurationTitle}`,
+          priceRub: psOffer.priceRub,
+        }
+      : null
+    : denomination
+      ? {
+          label: `${denomination.currency} ${denomination.amount}`,
+          priceRub: denomination.priceRub,
+        }
+      : null;
 
   function selectPlatform(id: string) {
     setPlatformId(id);
     setRegionId(null);
     setDenominationId(null);
+    setPsCatalogId("ps-plus");
+    setPsMonths(1);
+    setPsOfferId(null);
     setShowUsernameForm(false);
     setError("");
   }
@@ -85,13 +113,14 @@ export function OrderWizard() {
   function selectRegion(id: string) {
     setRegionId(id);
     setDenominationId(null);
+    setPsOfferId(null);
     setShowUsernameForm(false);
     setError("");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!platform || !region || !denomination) {
+    if (!platform || !region || !selected) {
       return;
     }
 
@@ -119,8 +148,8 @@ export function OrderWizard() {
         body: JSON.stringify({
           platform: platform.title,
           region: region.title,
-          denomination: `${denomination.currency} ${denomination.amount}`,
-          priceRub: denomination.priceRub,
+          denomination: selected.label,
+          priceRub: selected.priceRub,
           telegramUsername,
           telegramUserId,
           telegramInitData: getTelegramInitData(),
@@ -173,13 +202,13 @@ export function OrderWizard() {
         ) : null}
         {platform && region ? (
           <NavChip
-            label="Номинал"
+            label={isPlaystation ? "Подписки" : "Номинал"}
             onClick={() =>
               productRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
             }
           />
         ) : null}
-        {denomination ? (
+        {selected ? (
           <NavChip
             label="Оплата"
             onClick={() =>
@@ -227,42 +256,62 @@ export function OrderWizard() {
       ) : null}
 
       {platform && region ? (
-        <>
-          <section ref={productRef} className="scroll-mt-16">
-            <h2 className="text-lg font-semibold">Тип товара</h2>
-            <div className="mt-3">
-              <span className="inline-flex rounded-full bg-gradient-to-r from-[#ff4d6d] to-[#ff9a3c] px-4 py-2 text-sm font-medium text-white">
-                Подарочная карта
-              </span>
-            </div>
-          </section>
-
-          <section className="scroll-mt-16">
-            <h2 className="text-lg font-semibold">Номинал</h2>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              {offers.map((item) => (
-                <DenominationCard
-                  key={item.id}
-                  item={item}
-                  selected={item.id === denominationId}
-                  onSelect={() => {
-                    setDenominationId(item.id);
-                    setShowUsernameForm(false);
-                    setError("");
-                  }}
-                />
-              ))}
-            </div>
-          </section>
-        </>
+        <section ref={productRef} className="scroll-mt-16">
+          {isPlaystation ? (
+            <PsSubscriptions
+              catalogId={psCatalogId}
+              months={psMonths}
+              offerId={psOfferId}
+              onCatalog={(id) => {
+                setPsCatalogId(id);
+                setPsOfferId(null);
+                setShowUsernameForm(false);
+              }}
+              onDuration={(value) => {
+                setPsMonths(value);
+                setPsOfferId(null);
+                setShowUsernameForm(false);
+              }}
+              onOffer={(id) => {
+                setPsOfferId(id);
+                setShowUsernameForm(false);
+                setError("");
+              }}
+            />
+          ) : (
+            <>
+              <h2 className="text-lg font-semibold">Тип товара</h2>
+              <div className="mt-3">
+                <span className="inline-flex rounded-full bg-gradient-to-r from-[#ff4d6d] to-[#ff9a3c] px-4 py-2 text-sm font-medium text-white">
+                  Подарочная карта
+                </span>
+              </div>
+              <h2 className="mt-6 text-lg font-semibold">Номинал</h2>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {offers.map((item) => (
+                  <DenominationCard
+                    key={item.id}
+                    item={item}
+                    selected={item.id === denominationId}
+                    onSelect={() => {
+                      setDenominationId(item.id);
+                      setShowUsernameForm(false);
+                      setError("");
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </section>
       ) : null}
 
-      {platform && region && denomination ? (
+      {platform && region && selected ? (
         <section ref={payRef} className="scroll-mt-16 rounded-2xl bg-[#1c1c1f] p-4">
           <div className="flex items-end justify-between gap-3">
             <p className="text-sm text-white/60">К оплате</p>
             <p className="text-2xl font-semibold tracking-tight">
-              {denomination.priceRub.toLocaleString("ru-RU")} ₽
+              {selected.priceRub.toLocaleString("ru-RU")} ₽
             </p>
           </div>
 
