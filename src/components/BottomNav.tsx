@@ -5,11 +5,10 @@ import {
   NavHeartIcon,
   NavHomeIcon,
   NavProfileIcon,
-  NavSearchIcon,
 } from "@/components/icons";
 import { homeRegions } from "@/data/home";
 
-export type StoreTab = "home" | "search" | "favorites" | "cart" | "profile";
+export type StoreTab = "home" | "favorites" | "cart" | "profile";
 
 type Props = {
   regionId: string;
@@ -31,20 +30,13 @@ export function BottomNav({
   const idle = "text-[#8a92a8]";
 
   return (
-    <nav className="fixed right-0 bottom-0 left-0 z-30 mx-auto flex w-full max-w-[420px] items-end justify-around border-t border-white/10 bg-[#08090c]/95 px-1 pt-2 pb-[max(10px,env(safe-area-inset-bottom))] backdrop-blur-xl">
+    <nav className="fixed right-3 bottom-[max(10px,env(safe-area-inset-bottom))] left-3 z-30 mx-auto flex w-auto max-w-[420px] items-end justify-around rounded-[22px] border border-white/10 bg-[#12141c]/92 px-1 pt-2 pb-2 backdrop-blur-xl">
       <TabButton
         label="Главная"
         active={tab === "home"}
         onClick={() => onTab("home")}
       >
         <NavHomeIcon className={`h-5 w-5 ${tab === "home" ? active : idle}`} />
-      </TabButton>
-      <TabButton
-        label="Поиск"
-        active={tab === "search"}
-        onClick={() => onTab("search")}
-      >
-        <NavSearchIcon className={`h-5 w-5 ${tab === "search" ? active : idle}`} />
       </TabButton>
       <TabButton
         label="Избранное"
@@ -73,9 +65,9 @@ export function BottomNav({
         <NavProfileIcon className={`h-5 w-5 ${tab === "profile" ? active : idle}`} />
       </TabButton>
       <button type="button" onClick={onRegion} className="flex flex-col items-center gap-0.5 px-1 py-1">
-        <span className="flex items-center gap-1 rounded-full border border-white/15 px-2 py-0.5 text-[11px] font-semibold text-white">
-          <span>{region?.flagIcon ?? "🌐"}</span>
-          <span>{region?.id.toUpperCase() ?? "TR"}</span>
+        <span className="flex h-7 items-center gap-1 rounded-full border border-white/20 px-2 text-[11px] font-semibold leading-none text-white">
+          <span className="text-[13px] leading-none">{region?.flagIcon ?? "🌐"}</span>
+          <span>{(region?.regionId ?? "tr").toUpperCase()}</span>
         </span>
         <span className="text-[10px] text-[#8a92a8]">Регион</span>
       </button>

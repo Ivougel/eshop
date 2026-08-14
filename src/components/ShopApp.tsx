@@ -16,9 +16,10 @@ import { RobloxShop } from "@/components/RobloxShop";
 import { SteamShop } from "@/components/SteamShop";
 import { XboxShop } from "@/components/XboxShop";
 import type { CheckoutItem } from "@/data/cart";
-import { getGameById, searchGames, type Game } from "@/data/games";
+import { getGameById, type Game } from "@/data/games";
 import { homeRegions, type ShopEntry } from "@/data/home";
 import { psDurations, type PsOffer } from "@/data/ps-subscriptions";
+import { formatRub, priceForRegion } from "@/lib/pricing";
 
 type CartLine = {
   id: string;
@@ -38,7 +39,7 @@ export function ShopApp() {
   const [screen, setScreen] = useState<Screen>({ name: "landing" });
   const [regionId, setRegionId] = useState("tr");
   const [tab, setTab] = useState<StoreTab>("home");
-  const [months, setMonths] = useState(1);
+  const [months, setMonths] = useState(12);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [query, setQuery] = useState("");
@@ -64,14 +65,16 @@ export function ShopApp() {
     setScreen({ name: "game", gameId: game.id });
   }
 
-  function checkoutOffer(offer: PsOffer) {
+  function checkoutOffer(offer: PsOffer, priceRub: number) {
     const duration =
-      psDurations.find((item) => item.months === months)?.title ?? `${months} мес.`;
+      offer.id === "gta-plus"
+        ? "1 месяц"
+        : (psDurations.find((item) => item.months === months)?.title ?? `${months} мес.`);
     setScreen({
       name: "checkout",
       item: {
         title: `${offer.title}, ${duration}`,
-        priceRub: offer.priceRub,
+        priceRub,
         platformTitle: `PlayStation · ${regionTitle}`,
         regionTitle,
       },
@@ -83,7 +86,7 @@ export function ShopApp() {
       name: "checkout",
       item: {
         title: game.title,
-        priceRub: game.priceRub,
+        priceRub: priceForRegion(game.priceRub, regionId),
         platformTitle: `PlayStation · ${regionTitle}`,
         regionTitle,
       },
@@ -250,6 +253,7 @@ export function ShopApp() {
     return storeShell(
       <GamePage
         game={game}
+        priceRub={priceForRegion(game.priceRub, regionId)}
         favored={favoriteIds.includes(game.id)}
         onBack={() => setScreen({ name: "store" })}
         onFav={() => toggleFav(game.id)}
@@ -258,36 +262,11 @@ export function ShopApp() {
           addToCart({
             id: `${game.id}-${Date.now()}`,
             title: game.title,
-            priceRub: game.priceRub,
+            priceRub: priceForRegion(game.priceRub, regionId),
             cover: game.cover,
           })
         }
       />
-    );
-  }
-
-  if (tab === "search") {
-    const found = searchGames(query);
-    return storeShell(
-      <div className="px-[22px] pt-4 pb-24">
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Найти игру или подписку"
-          className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-base outline-none focus:border-[#d4af6a]"
-        />
-        <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-          {found.map((game) => (
-            <GameCard
-              key={game.id}
-              game={game}
-              favored={favoriteIds.includes(game.id)}
-              onOpen={() => openGame(game)}
-              onFav={() => toggleFav(game.id)}
-            />
-          ))}
-        </div>
-      </div>
     );
   }
 
@@ -303,13 +282,14 @@ export function ShopApp() {
         ) : (
           <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
             {favored.map((game) => (
-              <GameCard
-                key={game.id}
-                game={game}
-                favored
-                onOpen={() => openGame(game)}
-                onFav={() => toggleFav(game.id)}
-              />
+                <GameCard
+                  key={game.id}
+                  game={game}
+                  priceRub={priceForRegion(game.priceRub, regionId)}
+                  favored
+                  onOpen={() => openGame(game)}
+                  onFav={() => toggleFav(game.id)}
+                />
             ))}
           </div>
         )}
@@ -371,8 +351,12 @@ export function ShopApp() {
 
   return storeShell(
     <CatalogHome
+      regionId={regionId}
       favoriteIds={favoriteIds}
       months={months}
+      query={query}
+      onQuery={setQuery}
+      onCabinet={() => setTab("profile")}
       onDuration={setMonths}
       onOffer={checkoutOffer}
       onGame={openGame}
@@ -383,6 +367,7 @@ export function ShopApp() {
 
 function GamePage({
   game,
+  priceRub,
   favored,
   onBack,
   onFav,
@@ -390,6 +375,7 @@ function GamePage({
   onCart,
 }: {
   game: Game;
+  priceRub: number;
   favored: boolean;
   onBack: () => void;
   onFav: () => void;
@@ -402,8 +388,8 @@ function GamePage({
         ← Назад
       </button>
       <div
-        className="mt-3 h-72 rounded-2xl bg-cover bg-center"
-        style={{ backgroundImage: `url(${game.cover})` }}
+        className="mt-3 h-72 rounded-2xl bg-[#12141c] bg-cover bg-center"
+        style={game.cover ? { backgroundImage: `url(${game.cover})` } : undefined}
       />
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
@@ -418,9 +404,7 @@ function GamePage({
           />
         </button>
       </div>
-      <p className="mt-4 text-2xl font-semibold">
-        {game.priceRub.toLocaleString("ru-RU")} ₽
-      </p>
+      <p className="mt-4 text-2xl font-semibold">{formatRub(priceRub)}</p>
       <button
         type="button"
         onClick={onBuy}
