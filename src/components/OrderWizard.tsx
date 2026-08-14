@@ -6,6 +6,7 @@ import { platforms, type Platform } from "@/data/platforms";
 import { regions } from "@/data/regions";
 import {
   closeMiniApp,
+  getTelegramInitData,
   getTelegramUserId,
   getTelegramUsername,
 } from "@/components/TelegramInit";
@@ -29,6 +30,14 @@ export function OrderWizard() {
       setUsername(fromTelegram);
     }
   }, []);
+
+  useEffect(() => {
+    if (!success) {
+      return;
+    }
+    const timer = window.setTimeout(() => closeMiniApp(), 2200);
+    return () => window.clearTimeout(timer);
+  }, [success]);
 
   const platform = platforms.find((item) => item.id === platformId) ?? null;
   const region = regions.find((item) => item.id === regionId) ?? null;
@@ -80,6 +89,7 @@ export function OrderWizard() {
           priceRub: denomination.priceRub,
           telegramUsername,
           telegramUserId: getTelegramUserId(),
+          telegramInitData: getTelegramInitData(),
         }),
       });
 
@@ -90,7 +100,6 @@ export function OrderWizard() {
       }
 
       setSuccess(true);
-      closeMiniApp();
     } catch {
       setError("Не удалось оформить заказ");
     } finally {
@@ -100,11 +109,13 @@ export function OrderWizard() {
 
   if (success) {
     return (
-      <div className="flex min-h-[70vh] flex-col items-center justify-center px-2 text-center">
-        <p className="text-4xl">✅</p>
-        <h1 className="mt-4 text-xl font-semibold">
-          Заказ оформлен. Менеджер свяжется с вами.
-        </h1>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
+        <div className="order-popup flex w-full max-w-xs flex-col items-center rounded-3xl bg-[#1c1c1f] px-6 py-10 text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-[#ff4d6d] to-[#ff9a3c] text-3xl">
+            ✓
+          </span>
+          <p className="mt-5 text-xl font-semibold">Ваш заказ получен</p>
+        </div>
       </div>
     );
   }

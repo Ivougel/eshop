@@ -10,7 +10,21 @@ type OrderBody = {
   priceRub?: unknown;
   telegramUsername?: unknown;
   telegramUserId?: unknown;
+  telegramInitData?: unknown;
 };
+
+function userIdFromInitData(initData: string): number | undefined {
+  try {
+    const userRaw = new URLSearchParams(initData).get("user");
+    if (!userRaw) {
+      return undefined;
+    }
+    const user = JSON.parse(userRaw) as { id?: number };
+    return typeof user.id === "number" ? user.id : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function asText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -57,6 +71,11 @@ export async function POST(request: Request) {
     typeof body.telegramUserId === "number"
       ? body.telegramUserId
       : Number.parseInt(asText(body.telegramUserId), 10);
+  const chatId =
+    (Number.isFinite(telegramUserId) && telegramUserId > 0
+      ? telegramUserId
+      : userIdFromInitData(asText(body.telegramInitData))) ??
+    (telegramUsername ? `@${telegramUsername.toLowerCase()}` : undefined);
 
   if (!platform || !region || !denomination || !Number.isFinite(priceRub)) {
     return NextResponse.json(
@@ -84,21 +103,22 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!Number.isFinite(telegramUserId) || telegramUserId <= 0) {
+  if (!chatId) {
     return NextResponse.json(
       { success: false, error: "Откройте магазин внутри Telegram" },
       { status: 400 }
     );
   }
 
-  const orderText = `Новый заказ:
+  const orderText = `Ваш заказ получен:
+
 Платформа: ${platform}
 Регион: ${region}
 Номинал: ${denomination}
 Сумма: ${priceRub} ₽
 Telegram: @${telegramUsername}`;
 
-  const delivered = await sendTelegramMessage(token, telegramUserId, orderText);
+  const delivered = await sendTelegramMessage(token, chatId, orderText);
 
   if (!delivered) {
     return NextResponse.json(

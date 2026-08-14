@@ -11,6 +11,7 @@ type TelegramWebApp = {
   ready: () => void;
   expand: () => void;
   close: () => void;
+  initData?: string;
   initDataUnsafe?: {
     user?: TelegramUser;
   };
@@ -24,16 +25,49 @@ declare global {
   }
 }
 
+function parseUserFromInitData(initData: string): TelegramUser | undefined {
+  try {
+    const userRaw = new URLSearchParams(initData).get("user");
+    if (!userRaw) {
+      return undefined;
+    }
+    const user = JSON.parse(userRaw) as TelegramUser;
+    if (typeof user.id !== "number") {
+      return undefined;
+    }
+    return user;
+  } catch {
+    return undefined;
+  }
+}
+
+export function getTelegramWebApp(): TelegramWebApp | undefined {
+  const webApp = window.Telegram?.WebApp;
+  webApp?.ready();
+  return webApp;
+}
+
+export function getTelegramUser(): TelegramUser | undefined {
+  const webApp = getTelegramWebApp();
+  return (
+    webApp?.initDataUnsafe?.user ?? parseUserFromInitData(webApp?.initData ?? "")
+  );
+}
+
 export function getTelegramUserId(): number | undefined {
-  return window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  return getTelegramUser()?.id;
 }
 
 export function getTelegramUsername(): string | undefined {
-  return window.Telegram?.WebApp?.initDataUnsafe?.user?.username;
+  return getTelegramUser()?.username;
+}
+
+export function getTelegramInitData(): string {
+  return getTelegramWebApp()?.initData ?? "";
 }
 
 export function closeMiniApp() {
-  window.Telegram?.WebApp?.close();
+  getTelegramWebApp()?.close();
 }
 
 export function TelegramInit() {
