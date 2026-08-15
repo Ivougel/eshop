@@ -16,9 +16,9 @@ export async function submitOrder(input: {
 }): Promise<{ ok: boolean; order?: CreatedOrder; error?: string }> {
   let telegramInitData = getTelegramInitData();
   if (!hasInitHash(telegramInitData)) {
-    for (let attempt = 0; attempt < 40 && !hasInitHash(telegramInitData); attempt += 1) {
-      await new Promise((resolve) => window.setTimeout(resolve, 150));
-      window.Telegram?.WebApp?.ready();
+    window.Telegram?.WebApp?.ready();
+    for (let attempt = 0; attempt < 8 && !hasInitHash(telegramInitData); attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
       telegramInitData = getTelegramInitData() || telegramInitData;
     }
   }

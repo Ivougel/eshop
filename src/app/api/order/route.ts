@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { runtimeEnv } from "@/lib/env";
 import { createOrder, managerOrderHtml, receiptMessageHtml } from "@/lib/orders";
-import { appUrlFrom, telegramCallRetry } from "@/lib/telegram";
+import { telegramCallRetry } from "@/lib/telegram";
 import { validateInitData } from "@/lib/validate-init-data";
-import { sendWelcome } from "@/lib/welcome";
 
 export const runtime = "nodejs";
 
@@ -73,30 +72,29 @@ export async function POST(request: Request) {
     priceRub,
   });
 
-  const receipt = {
-    chat_id: chatId,
-    text: receiptMessageHtml(order),
-    parse_mode: "HTML",
-    disable_web_page_preview: true,
-  };
-
-  let delivered = await telegramCallRetry(token, "sendMessage", receipt);
-  if (!delivered.ok) {
-    await sendWelcome(token, chatId, appUrlFrom(request));
-    delivered = await telegramCallRetry(token, "sendMessage", receipt);
-  }
-
   const managerId = Number(runtimeEnv("TELEGRAM_MANAGER_CHAT_ID"));
-  let managerOk = false;
-  if (Number.isFinite(managerId) && managerId !== 0) {
-    const manager = await telegramCallRetry(token, "sendMessage", {
-      chat_id: managerId,
-      text: managerOrderHtml(order, validated.user.username),
+  const notify = [
+    telegramCallRetry(token, "sendMessage", {
+      chat_id: chatId,
+      text: receiptMessageHtml(order),
       parse_mode: "HTML",
       disable_web_page_preview: true,
-    });
-    managerOk = manager.ok;
+    }),
+  ];
+  if (Number.isFinite(managerId) && managerId !== 0) {
+    notify.push(
+      telegramCallRetry(token, "sendMessage", {
+        chat_id: managerId,
+        text: managerOrderHtml(order, validated.user.username),
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      })
+    );
   }
+
+  const results = await Promise.all(notify);
+  const delivered = results[0];
+  const managerOk = results[1]?.ok ?? false;
 
   if (!delivered.ok && !managerOk) {
     const flood = delivered.errorCode === 429 || /too many requests/i.test(delivered.error ?? "");

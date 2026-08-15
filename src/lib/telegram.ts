@@ -34,7 +34,7 @@ export async function telegramCall(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(8000),
     });
     const data = (await response.json().catch(() => ({}))) as {
       ok?: boolean;
@@ -66,7 +66,7 @@ export async function telegramCallRetry(
 ): Promise<TelegramCallResult> {
   let last: TelegramCallResult = { ok: false, error: "network" };
 
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
     last = await telegramCall(token, method, body);
     if (last.ok) {
       return last;
@@ -79,11 +79,11 @@ export async function telegramCallRetry(
       last.errorCode >= 500 ||
       /timeout|network|fetch|Too Many/i.test(last.error ?? "");
 
-    if (!transient || attempt === 2) {
+    if (!transient || attempt === 1) {
       return last;
     }
 
-    await sleep(Math.min((flood || 1) * 1000, 2000));
+    await sleep(Math.min((flood || 1) * 400, 800));
   }
 
   return last;
