@@ -39,11 +39,12 @@ describe("notifyOrder", () => {
     const result = await notifyOrder({ ...base, order: order(), send });
 
     expect(result).toEqual({ receiptOk: true, managerOk: true });
-    expect(calls).toHaveLength(2);
-    expect(calls[0]?.body.chat_id).toBe(777001);
-    expect(String(calls[0]?.body.text)).toContain("Чек о покупке");
-    expect(calls[1]?.body.chat_id).toBe(1557402625);
-    expect(String(calls[1]?.body.text)).toContain("Новый заказ");
+    const buyer = calls.filter((item) => item.body.chat_id === 777001);
+    const manager = calls.filter((item) => item.body.chat_id === 1557402625);
+    expect(buyer.length).toBeGreaterThanOrEqual(1);
+    expect(manager).toHaveLength(1);
+    expect(String(buyer[0]?.body.text)).toContain("Чек о покупке");
+    expect(String(manager[0]?.body.text)).toContain("Новый заказ");
   });
 
   it("still sends the buyer receipt when the manager send succeeds first logically", async () => {
@@ -65,7 +66,10 @@ describe("notifyOrder", () => {
   it("does not send a manager copy to the buyer chat", async () => {
     const { send, calls } = queueSend([{ ok: true }, { ok: true }]);
     await notifyOrder({ ...base, order: order(), send });
-    expect(calls[0]?.body.chat_id).not.toBe(base.managerId);
+    const receipts = calls.filter((item) =>
+      String(item.body.text).includes("Чек о покупке")
+    );
+    expect(receipts.every((item) => item.body.chat_id === 777001)).toBe(true);
   });
 
   it("retries the receipt as plain text when HTML parse fails", async () => {
@@ -77,9 +81,11 @@ describe("notifyOrder", () => {
     const result = await notifyOrder({ ...base, order: order(), send });
 
     expect(result.receiptOk).toBe(true);
-    expect(calls[1]?.body.chat_id).toBe(777001);
-    expect(calls[1]?.body.parse_mode).toBeUndefined();
-    expect(String(calls[1]?.body.text)).toContain("Чек о покупке");
+    const plain = calls.find(
+      (item) => item.body.chat_id === 777001 && item.body.parse_mode == null
+    );
+    expect(plain).toBeTruthy();
+    expect(String(plain?.body.text)).toContain("Чек о покупке");
   });
 
   it("retries the receipt after Telegram flood on the buyer chat", async () => {
@@ -104,22 +110,34 @@ describe("notifyOrder", () => {
     const result = await notifyOrder({ ...base, order: order(), send });
 
     expect(result.receiptOk).toBe(true);
-    expect(calls[0]?.body.chat_id).toBe(777001);
-    expect(calls[1]?.body.chat_id).toBe(777001);
-    expect(calls[2]?.body.chat_id).toBe(777001);
-    expect(String(calls[2]?.body.text)).toContain("Чек о покупке");
+    const buyer = calls.filter((item) => item.body.chat_id === 777001);
+    expect(buyer.length).toBeGreaterThanOrEqual(2);
+    expect(buyer.some((item) => String(item.body.text).includes("Чек о покупке"))).toBe(
+      true
+    );
   });
 
   it("reports receiptOk=false if every buyer attempt fails", async () => {
-    const { send } = queueSend([
-      { ok: false, errorCode: 403, error: "forbidden" },
-      { ok: false, errorCode: 403, error: "forbidden" },
-      { ok: false, errorCode: 403, error: "forbidden" },
-      { ok: true },
-    ]);
+    const send: TelegramSender = async (_method, body) => {
+      if (body.chat_id === 1557402625) {
+        return { ok: true };
+      }
+      return { ok: false, errorCode: 403, error: "forbidden" };
+    };
     const result = await notifyOrder({ ...base, order: order(), send });
     expect(result.receiptOk).toBe(false);
     expect(result.managerOk).toBe(true);
+  });
+
+  it("retries the receipt after a network timeout", async () => {
+    const { send, calls } = queueSend([
+      { ok: false, error: "timeout" },
+      { ok: true },
+      { ok: true },
+    ]);
+    const result = await notifyOrder({ ...base, order: order(), send });
+    expect(result.receiptOk).toBe(true);
+    expect(calls.filter((item) => item.body.chat_id === 777001).length).toBeGreaterThanOrEqual(2);
   });
 
   it("sends a receipt even when no manager is configured", async () => {

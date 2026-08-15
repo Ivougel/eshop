@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { runtimeEnv } from "@/lib/env";
-import { notifyOrder } from "@/lib/notify-order";
+import { notifyOrderInBackground } from "@/lib/notify-order";
 import { createOrder } from "@/lib/orders";
 import { appUrlFrom } from "@/lib/telegram";
 import { validateInitData } from "@/lib/validate-init-data";
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
   });
 
   const managerId = Number(runtimeEnv("TELEGRAM_MANAGER_CHAT_ID"));
-  await notifyOrder({
+  notifyOrderInBackground({
     token,
     order,
     username: validated.user.username,

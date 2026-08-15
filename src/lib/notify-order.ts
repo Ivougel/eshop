@@ -38,6 +38,13 @@ function isBlocked(result: TelegramCallResult): boolean {
   );
 }
 
+function isNetwork(result: TelegramCallResult): boolean {
+  return (
+    !result.errorCode ||
+    /timeout|network|abort|fetch|ECONN|ENOTFOUND|UND_ERR/i.test(result.error ?? "")
+  );
+}
+
 export function createTelegramSender(token: string): TelegramSender {
   return (method, body) => telegramCall(token, method, body);
 }
@@ -61,6 +68,18 @@ async function sendReceipt(
   let result = await send("sendMessage", html);
   if (result.ok) {
     return result;
+  }
+
+  if (isNetwork(result)) {
+    await sleep(400);
+    result = await send("sendMessage", html);
+    if (result.ok) {
+      return result;
+    }
+    result = await send("sendMessage", plain);
+    if (result.ok) {
+      return result;
+    }
   }
 
   if (isParseError(result)) {
@@ -103,28 +122,62 @@ export async function notifyOrder(input: {
   send?: TelegramSender;
 }): Promise<NotifyResult> {
   const send = input.send ?? createTelegramSender(input.token);
-  const receipt = await sendReceipt(send, input.order);
-
-  let managerOk = true;
-  if (Number.isFinite(input.managerId) && input.managerId !== 0) {
-    const manager = await send("sendMessage", {
-      chat_id: input.managerId,
-      text: managerOrderHtml(input.order, input.username),
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-    });
-    managerOk = manager.ok;
-    if (!manager.ok && isParseError(manager)) {
-      const retry = await send("sendMessage", {
-        chat_id: input.managerId,
-        text: managerOrderHtml(input.order, input.username)
-          .replaceAll("<b>", "")
-          .replaceAll("</b>", ""),
-        disable_web_page_preview: true,
-      });
-      managerOk = retry.ok;
-    }
-  }
+  const [receipt, managerOk] = await Promise.all([
+    sendReceipt(send, input.order),
+    sendManager(send, input),
+  ]);
 
   return { receiptOk: receipt.ok, managerOk };
+}
+
+async function sendManager(
+  send: TelegramSender,
+  input: {
+    order: StoredOrder;
+    username?: string;
+    managerId: number;
+  }
+): Promise<boolean> {
+  if (!Number.isFinite(input.managerId) || input.managerId === 0) {
+    return true;
+  }
+
+  const html = {
+    chat_id: input.managerId,
+    text: managerOrderHtml(input.order, input.username),
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+  };
+  let manager = await send("sendMessage", html);
+  if (manager.ok) {
+    return true;
+  }
+  if (isNetwork(manager) || isFlood(manager)) {
+    await sleep(Math.min((manager.retryAfter ?? 1) * 400, 1200));
+    manager = await send("sendMessage", html);
+    if (manager.ok) {
+      return true;
+    }
+  }
+  if (isParseError(manager) || !manager.ok) {
+    const retry = await send("sendMessage", {
+      chat_id: input.managerId,
+      text: managerOrderHtml(input.order, input.username)
+        .replaceAll("<b>", "")
+        .replaceAll("</b>", ""),
+      disable_web_page_preview: true,
+    });
+    return retry.ok;
+  }
+  return false;
+}
+
+const jobs = new Set<Promise<unknown>>();
+
+export function notifyOrderInBackground(
+  input: Parameters<typeof notifyOrder>[0]
+): void {
+  const job = notifyOrder(input).catch(() => undefined);
+  jobs.add(job);
+  void job.finally(() => jobs.delete(job));
 }

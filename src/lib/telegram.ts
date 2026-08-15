@@ -34,7 +34,7 @@ export async function telegramCall(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(3500),
     });
     const data = (await response.json().catch(() => ({}))) as {
       ok?: boolean;
