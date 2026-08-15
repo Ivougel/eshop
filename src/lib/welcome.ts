@@ -1,9 +1,9 @@
-import { startKeyboard, startMessageHtml } from "@/data/bot-start";
+import { startAgainHtml, startKeyboard, startMessageHtml } from "@/data/bot-start";
 import { telegramCallRetry } from "@/lib/telegram";
 
-const sentAt = new Map<number, number>();
+const welcomedAt = new Map<number, number>();
 const inflight = new Map<number, Promise<boolean>>();
-const DEDUP_MS = 90_000;
+const FULL_WELCOME_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function sendWelcome(
   token: string,
@@ -15,26 +15,30 @@ export async function sendWelcome(
     return pending;
   }
 
-  const last = sentAt.get(chatId) ?? 0;
-  if (Date.now() - last < DEDUP_MS) {
-    return true;
-  }
+  const last = welcomedAt.get(chatId) ?? 0;
+  const job =
+    Date.now() - last > FULL_WELCOME_MS
+      ? deliverStart(token, chatId, webAppUrl, startMessageHtml())
+      : deliverStart(token, chatId, webAppUrl, startAgainHtml());
 
-  const job = deliverWelcome(token, chatId, webAppUrl);
   inflight.set(chatId, job);
   try {
-    return await job;
+    const ok = await job;
+    if (ok && Date.now() - last > FULL_WELCOME_MS) {
+      welcomedAt.set(chatId, Date.now());
+    }
+    return ok;
   } finally {
     inflight.delete(chatId);
   }
 }
 
-async function deliverWelcome(
+async function deliverStart(
   token: string,
   chatId: number,
-  webAppUrl: string
+  webAppUrl: string,
+  text: string
 ): Promise<boolean> {
-  const text = startMessageHtml();
   const attempts: Record<string, unknown>[] = [];
   if (webAppUrl) {
     attempts.push({
@@ -55,7 +59,6 @@ async function deliverWelcome(
   for (const body of attempts) {
     const result = await telegramCallRetry(token, "sendMessage", body);
     if (result.ok) {
-      sentAt.set(chatId, Date.now());
       return true;
     }
   }

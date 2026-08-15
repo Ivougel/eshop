@@ -271,30 +271,11 @@ if (typeof window !== "undefined") {
   captureTelegramInitData();
 }
 
-function requestWelcome() {
-  void (async () => {
-    let initData = getTelegramInitData();
-    for (let attempt = 0; attempt < 20 && !initData.includes("hash="); attempt += 1) {
-      await new Promise((resolve) => window.setTimeout(resolve, 100));
-      initData = getTelegramInitData() || initData;
-    }
-    if (!initData.includes("hash=")) {
-      return;
-    }
-    await fetch("/api/telegram/welcome", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ telegramInitData: initData }),
-    }).catch(() => undefined);
-  })();
-}
-
 export function TelegramInit() {
   useEffect(() => {
     captureShopSession();
     captureTelegramInitData();
     bootTelegram();
-    requestWelcome();
 
     if (window.Telegram?.WebApp) {
       return;
@@ -306,14 +287,12 @@ export function TelegramInit() {
     if (existing) {
       existing.addEventListener("load", () => {
         bootTelegram();
-        requestWelcome();
       });
       return;
     }
 
     const waitForInjected = window.setTimeout(() => {
       if (bootTelegram()) {
-        requestWelcome();
         return;
       }
       const script = document.createElement("script");
@@ -321,7 +300,6 @@ export function TelegramInit() {
       script.async = true;
       script.onload = () => {
         bootTelegram();
-        requestWelcome();
       };
       document.head.appendChild(script);
     }, 400);

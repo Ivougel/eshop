@@ -27,6 +27,10 @@ export function startMessageHtml(): string {
   ].join("\n");
 }
 
+export function startAgainHtml(): string {
+  return "Магазин уже открыт — нажмите кнопку ниже.";
+}
+
 export function startKeyboard(webAppUrl: string) {
   return {
     inline_keyboard: [
