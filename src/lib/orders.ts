@@ -1,6 +1,7 @@
 export type StoredOrder = {
   id: number;
   chatId: number;
+  username: string;
   platform: string;
   region: string;
   denomination: string;
@@ -19,6 +20,7 @@ function escapeHtml(value: string): string {
 
 export function createOrder(input: {
   chatId: number;
+  username?: string;
   platform: string;
   region: string;
   denomination: string;
@@ -31,6 +33,7 @@ export function createOrder(input: {
   const order: StoredOrder = {
     id,
     chatId: input.chatId,
+    username: input.username ?? "",
     platform: input.platform,
     region: input.region,
     denomination: input.denomination,
