@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { runtimeEnv } from "@/lib/env";
 import { createOrder, managerOrderHtml, receiptMessageHtml } from "@/lib/orders";
 import { telegramCallRetry } from "@/lib/telegram";
@@ -73,41 +73,27 @@ export async function POST(request: Request) {
   });
 
   const managerId = Number(runtimeEnv("TELEGRAM_MANAGER_CHAT_ID"));
-  const notify = [
-    telegramCallRetry(token, "sendMessage", {
-      chat_id: chatId,
-      text: receiptMessageHtml(order),
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-    }),
-  ];
-  if (Number.isFinite(managerId) && managerId !== 0) {
-    notify.push(
+  after(() => {
+    const notify = [
       telegramCallRetry(token, "sendMessage", {
-        chat_id: managerId,
-        text: managerOrderHtml(order, validated.user.username),
+        chat_id: chatId,
+        text: receiptMessageHtml(order),
         parse_mode: "HTML",
         disable_web_page_preview: true,
-      })
-    );
-  }
-
-  const results = await Promise.all(notify);
-  const delivered = results[0];
-  const managerOk = results[1]?.ok ?? false;
-
-  if (!delivered.ok && !managerOk) {
-    const flood = delivered.errorCode === 429 || /too many requests/i.test(delivered.error ?? "");
-    return NextResponse.json(
-      {
-        success: false,
-        error: flood
-          ? "Telegram временно ограничил отправку. Подождите пару секунд и нажмите «Оплатить» ещё раз."
-          : "Не удалось отправить чек в чат. Напишите боту /start и попробуйте снова.",
-      },
-      { status: 502 }
-    );
-  }
+      }),
+    ];
+    if (Number.isFinite(managerId) && managerId !== 0) {
+      notify.push(
+        telegramCallRetry(token, "sendMessage", {
+          chat_id: managerId,
+          text: managerOrderHtml(order, validated.user.username),
+          parse_mode: "HTML",
+          disable_web_page_preview: true,
+        })
+      );
+    }
+    return Promise.all(notify);
+  });
 
   return NextResponse.json({
     success: true,

@@ -14,11 +14,11 @@ export async function submitOrder(input: {
   denomination: string;
   priceRub: number;
 }): Promise<{ ok: boolean; order?: CreatedOrder; error?: string }> {
+  window.Telegram?.WebApp?.ready();
   let telegramInitData = getTelegramInitData();
   if (!hasInitHash(telegramInitData)) {
-    window.Telegram?.WebApp?.ready();
-    for (let attempt = 0; attempt < 8 && !hasInitHash(telegramInitData); attempt += 1) {
-      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    for (let attempt = 0; attempt < 4 && !hasInitHash(telegramInitData); attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 40));
       telegramInitData = getTelegramInitData() || telegramInitData;
     }
   }
