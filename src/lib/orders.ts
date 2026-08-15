@@ -18,6 +18,20 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;");
 }
 
+function safeText(value: string): string {
+  return value.replace(/[\u00a0\u202f\u2009]/g, " ");
+}
+
+export function formatOrderWhen(iso: string): string {
+  return safeText(
+    new Date(iso).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })
+  );
+}
+
+export function formatOrderSum(priceRub: number): string {
+  return `${safeText(priceRub.toLocaleString("ru-RU"))} ₽`;
+}
+
 export function createOrder(input: {
   chatId: number;
   username?: string;
@@ -56,21 +70,30 @@ export function managerOrderHtml(
     `Клиент: ${escapeHtml(who)}`,
     `Товар: ${escapeHtml(order.platform)} · ${escapeHtml(order.denomination)}`,
     `Регион: ${escapeHtml(order.region)}`,
-    `Сумма: <b>${order.priceRub.toLocaleString("ru-RU")} ₽</b>`,
+    `Сумма: <b>${escapeHtml(formatOrderSum(order.priceRub))}</b>`,
   ].join("\n");
 }
 
 export function receiptMessageHtml(order: StoredOrder): string {
-  const when = new Date(order.createdAt).toLocaleString("ru-RU", {
-    timeZone: "Europe/Moscow",
-  });
   return [
     "<b>Чек о покупке</b>",
     "",
     `Заказ <b>№${order.id}</b>`,
     `Товар: ${escapeHtml(order.platform)} · ${escapeHtml(order.denomination)}`,
     `Регион: ${escapeHtml(order.region)}`,
-    `Сумма: <b>${order.priceRub.toLocaleString("ru-RU")} ₽</b>`,
-    `Дата: ${when}`,
+    `Сумма: <b>${escapeHtml(formatOrderSum(order.priceRub))}</b>`,
+    `Дата: ${escapeHtml(formatOrderWhen(order.createdAt))}`,
+  ].join("\n");
+}
+
+export function receiptMessageText(order: StoredOrder): string {
+  return [
+    "Чек о покупке",
+    "",
+    `Заказ №${order.id}`,
+    `Товар: ${order.platform} · ${order.denomination}`,
+    `Регион: ${order.region}`,
+    `Сумма: ${formatOrderSum(order.priceRub)}`,
+    `Дата: ${formatOrderWhen(order.createdAt)}`,
   ].join("\n");
 }
