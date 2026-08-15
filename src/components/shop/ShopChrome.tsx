@@ -253,7 +253,7 @@ export function PayButton({
       type="button"
       disabled={!enabled || pending}
       onClick={onClick}
-      className={`h-12 w-full rounded-2xl text-base font-semibold ${
+      className={`h-12 w-full touch-manipulation rounded-2xl text-base font-semibold ${
         enabled
           ? "bg-[#107c10] text-white"
           : "bg-[#1f3d1c] text-[#7aa56f]"

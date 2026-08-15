@@ -41,6 +41,22 @@ export function createOrder(input: {
   return order;
 }
 
+export function managerOrderHtml(
+  order: StoredOrder,
+  username?: string
+): string {
+  const who = username ? `@${username}` : `id ${order.chatId}`;
+  return [
+    "<b>Новый заказ</b>",
+    "",
+    `Заказ <b>№${order.id}</b>`,
+    `Клиент: ${escapeHtml(who)}`,
+    `Товар: ${escapeHtml(order.platform)} · ${escapeHtml(order.denomination)}`,
+    `Регион: ${escapeHtml(order.region)}`,
+    `Сумма: <b>${order.priceRub.toLocaleString("ru-RU")} ₽</b>`,
+  ].join("\n");
+}
+
 export function receiptMessageHtml(order: StoredOrder): string {
   const when = new Date(order.createdAt).toLocaleString("ru-RU", {
     timeZone: "Europe/Moscow",

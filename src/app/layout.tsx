@@ -19,6 +19,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
   themeColor: "#08090c",
 };
 
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="ru" className={`${geist.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full bg-[#08090c] font-sans text-white" suppressHydrationWarning>
         <Script id="icity-tg-capture" strategy="beforeInteractive">
-          {`(function(){try{var h=location.hash.replace(/^#/,"");var q=location.search.replace(/^\\?/,"");var sid=new URLSearchParams(q).get("sid")||decodeURIComponent((location.pathname.match(/^\\/s\\/([^/]+)/)||[])[1]||"");if(sid)sessionStorage.setItem("icity-tg-sid",sid);function pick(s){if(!s)return"";var p=new URLSearchParams(s);var d=p.get("tgWebAppData");if(d)return d;if(p.get("user")&&p.get("hash"))return s;return""}var d=pick(h)||pick(q);if(!d)return;sessionStorage.setItem("icity-tg-init",d);var u=new URLSearchParams(d).get("user");if(u)sessionStorage.setItem("icity-tg-user",u);}catch(e){}})();`}
+          {`(function(){try{function set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}try{localStorage.setItem(k,v)}catch(e){}}var h=location.hash.replace(/^#/,"");var q=location.search.replace(/^\\?/,"");var sid=new URLSearchParams(q).get("sid")||decodeURIComponent((location.pathname.match(/^\\/s\\/([^/]+)/)||[])[1]||"");if(sid)set("icity-tg-sid",sid);function pick(s){if(!s)return"";var p=new URLSearchParams(s);var d=p.get("tgWebAppData");if(d)return d;if(p.get("user")&&p.get("hash"))return s;return""}var d=pick(h)||pick(q);if(!d)return;set("icity-tg-init",d);var u=new URLSearchParams(d).get("user");if(u)set("icity-tg-user",u);}catch(e){}})();`}
         </Script>
         <TelegramInit />
         <main className="mx-auto w-full max-w-[420px]">{children}</main>

@@ -24,15 +24,43 @@ export type ValidatedInitData = {
   authDate: number;
 };
 
-export function validateInitData(
-  initData: string,
-  botToken: string
-): ValidatedInitData | undefined {
-  const raw = initData.trim();
-  if (!raw || !botToken) {
-    return undefined;
+function expandInitDataCandidates(raw: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  const add = (value: string) => {
+    const next = value.trim();
+    if (!next || seen.has(next)) {
+      return;
+    }
+    seen.add(next);
+    out.push(next);
+  };
+
+  add(raw);
+  try {
+    add(decodeURIComponent(raw));
+  } catch {
+    /* ignore */
   }
 
+  const nested = new URLSearchParams(raw).get("tgWebAppData");
+  if (nested) {
+    add(nested);
+    try {
+      add(decodeURIComponent(nested));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return out;
+}
+
+function validateOnce(
+  raw: string,
+  botToken: string
+): ValidatedInitData | undefined {
   const params = new URLSearchParams(raw);
   const hash = params.get("hash");
   if (!hash) {
@@ -72,4 +100,23 @@ export function validateInitData(
   } catch {
     return undefined;
   }
+}
+
+export function validateInitData(
+  initData: string,
+  botToken: string
+): ValidatedInitData | undefined {
+  const raw = initData.trim();
+  if (!raw || !botToken) {
+    return undefined;
+  }
+
+  for (const candidate of expandInitDataCandidates(raw)) {
+    const validated = validateOnce(candidate, botToken);
+    if (validated) {
+      return validated;
+    }
+  }
+
+  return undefined;
 }

@@ -35,15 +35,24 @@ const SESSION_CACHE = "icity-tg-sid";
 
 function storageGet(key: string): string {
   try {
-    return sessionStorage.getItem(key) ?? "";
+    return sessionStorage.getItem(key) || localStorage.getItem(key) || "";
   } catch {
-    return "";
+    try {
+      return localStorage.getItem(key) || "";
+    } catch {
+      return "";
+    }
   }
 }
 
 function storageSet(key: string, value: string) {
   try {
     sessionStorage.setItem(key, value);
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.setItem(key, value);
   } catch {
     /* ignore */
   }
@@ -227,6 +236,7 @@ export function getTelegramDisplayName(): string {
 }
 
 export function getTelegramInitData(): string {
+  window.Telegram?.WebApp?.ready();
   return captureTelegramInitData();
 }
 

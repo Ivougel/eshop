@@ -48,7 +48,7 @@ export function CheckoutPanel({
   }
 
   return (
-    <div className="px-[22px] pb-8 pt-2">
+    <div className="px-[22px] pt-2 pb-[max(48px,calc(24px+env(safe-area-inset-bottom)))]">
       <button type="button" onClick={onBack} className="text-sm text-[#8a92a8]">
         ← Назад
       </button>
@@ -70,7 +70,7 @@ export function CheckoutPanel({
           type="button"
           disabled={pending}
           onClick={() => void pay()}
-          className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#d4af6a] to-[#e8c47e] px-4 text-base font-semibold text-[#0a0c12] disabled:opacity-60"
+          className="mt-4 inline-flex h-12 w-full touch-manipulation items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#d4af6a] to-[#e8c47e] px-4 text-base font-semibold text-[#0a0c12] disabled:opacity-60"
         >
           <SbpIcon className="h-7 w-7" />
           {pending ? "Отправка…" : "Оплатить"}
