@@ -1,4 +1,4 @@
-import { after, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { runtimeEnv } from "@/lib/env";
 import { createOrder, managerOrderHtml, receiptMessageHtml } from "@/lib/orders";
 import { telegramCallRetry } from "@/lib/telegram";
@@ -73,27 +73,25 @@ export async function POST(request: Request) {
   });
 
   const managerId = Number(runtimeEnv("TELEGRAM_MANAGER_CHAT_ID"));
-  after(() => {
-    const notify = [
+  const notify = [
+    telegramCallRetry(token, "sendMessage", {
+      chat_id: chatId,
+      text: receiptMessageHtml(order),
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    }),
+  ];
+  if (Number.isFinite(managerId) && managerId !== 0) {
+    notify.push(
       telegramCallRetry(token, "sendMessage", {
-        chat_id: chatId,
-        text: receiptMessageHtml(order),
+        chat_id: managerId,
+        text: managerOrderHtml(order, validated.user.username),
         parse_mode: "HTML",
         disable_web_page_preview: true,
-      }),
-    ];
-    if (Number.isFinite(managerId) && managerId !== 0) {
-      notify.push(
-        telegramCallRetry(token, "sendMessage", {
-          chat_id: managerId,
-          text: managerOrderHtml(order, validated.user.username),
-          parse_mode: "HTML",
-          disable_web_page_preview: true,
-        })
-      );
-    }
-    return Promise.all(notify);
-  });
+      })
+    );
+  }
+  void Promise.all(notify);
 
   return NextResponse.json({
     success: true,
