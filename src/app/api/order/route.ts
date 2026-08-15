@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { runtimeEnv } from "@/lib/env";
 import { createOrder, managerOrderHtml, receiptMessageHtml } from "@/lib/orders";
-import { appendSheetOrder } from "@/lib/sheets";
 import { appUrlFrom, telegramCallRetry } from "@/lib/telegram";
 import { validateInitData } from "@/lib/validate-init-data";
 import { sendWelcome } from "@/lib/welcome";
@@ -72,11 +71,6 @@ export async function POST(request: Request) {
     region,
     denomination,
     priceRub,
-  });
-
-  await appendSheetOrder({
-    ...order,
-    status: "Новый",
   });
 
   const receipt = {

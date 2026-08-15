@@ -14,20 +14,9 @@ import {
 } from "@/components/icons";
 import {
   getTelegramDisplayName,
-  getTelegramInitData,
   getTelegramUser,
   getTelegramUserId,
 } from "@/components/TelegramInit";
-
-type HistoryOrder = {
-  id: number;
-  createdAt: string;
-  platform: string;
-  denomination: string;
-  region: string;
-  priceRub: number;
-  status: string;
-};
 import { botUrl, botUsername, homeRegions } from "@/data/home";
 
 const PSN_KEY = "icity-psn-account";
@@ -109,20 +98,22 @@ export function Cabinet({ regionId = "tr", onFavorites }: Props) {
     window.setTimeout(() => setCopied(false), 1600);
   }
 
-  if (view === "history") {
-    return <HistoryView onBack={() => setView("main")} />;
-  }
-
   if (view !== "main") {
     return (
       <StubView
         title={
-          view === "codes" ? "Резервные коды" : "Реферальная программа"
+          view === "history"
+            ? "История покупок"
+            : view === "codes"
+              ? "Резервные коды"
+              : "Реферальная программа"
         }
         text={
-          view === "codes"
-            ? "Скоро можно будет сохранить резервные коды PSN. Пока это заглушка."
-            : "Скоро здесь будет статистика приглашений и начисления 3% с покупок друзей."
+          view === "history"
+            ? "Пока нет заказов — они появятся здесь после оплаты."
+            : view === "codes"
+              ? "Скоро можно будет сохранить резервные коды PSN. Пока это заглушка."
+              : "Скоро здесь будет статистика приглашений и начисления 3% с покупок друзей."
         }
         onBack={() => setView("main")}
       />
@@ -405,86 +396,6 @@ function MenuRow({
     <button type="button" onClick={onClick} className={className}>
       {body}
     </button>
-  );
-}
-
-function HistoryView({ onBack }: { onBack: () => void }) {
-  const [orders, setOrders] = useState<HistoryOrder[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const response = await fetch("/api/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ telegramInitData: getTelegramInitData() }),
-        });
-        const data = (await response.json().catch(() => ({}))) as {
-          orders?: HistoryOrder[];
-        };
-        if (!cancelled) {
-          setOrders(Array.isArray(data.orders) ? data.orders : []);
-        }
-      } catch {
-        if (!cancelled) {
-          setOrders([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return (
-    <div className="pt-2">
-      <button type="button" onClick={onBack} className="text-sm text-[#8a92a8]">
-        ← Назад
-      </button>
-      <h1 className="mt-4 text-xl font-semibold">История покупок</h1>
-      {loading ? (
-        <p className="mt-3 text-sm text-[#8a92a8]">Загружаем заказы…</p>
-      ) : orders.length === 0 ? (
-        <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-5 text-[#8a92a8]">
-          Пока нет заказов — они появятся здесь после оформления.
-        </p>
-      ) : (
-        <div className="mt-4 flex flex-col gap-2">
-          {orders.map((order) => (
-            <article
-              key={`${order.id}-${order.createdAt}`}
-              className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold">Заказ №{order.id}</p>
-                <span className="rounded-full bg-[#d4af6a]/15 px-2 py-0.5 text-[11px] font-medium text-[#d4af6a]">
-                  {order.status || "Новый"}
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-[#cfd3dc]">
-                {order.platform}
-                {order.denomination ? ` · ${order.denomination}` : ""}
-              </p>
-              <div className="mt-2 flex items-end justify-between gap-3 text-[13px] text-[#8a92a8]">
-                <span>
-                  {order.region}
-                  {order.createdAt ? ` · ${order.createdAt}` : ""}
-                </span>
-                <span className="font-semibold text-white">
-                  {Number(order.priceRub || 0).toLocaleString("ru-RU")} ₽
-                </span>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 
