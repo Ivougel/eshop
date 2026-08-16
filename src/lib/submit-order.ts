@@ -1,4 +1,5 @@
 import { getTelegramInitData } from "@/components/TelegramInit";
+import { saveOrderToHistory } from "@/lib/order-history";
 
 export type CreatedOrder = {
   orderId: number;
@@ -49,6 +50,14 @@ export async function submitOrder(input: {
     if (!response.ok || !data.success || !data.orderId) {
       return { ok: false, error: data.error ?? "Не удалось оформить заказ" };
     }
+    saveOrderToHistory({
+      orderId: data.orderId,
+      platform: input.platform,
+      region: input.region,
+      denomination: input.denomination,
+      priceRub: input.priceRub,
+      createdAt: new Date().toISOString(),
+    });
     return {
       ok: true,
       order: { orderId: data.orderId },

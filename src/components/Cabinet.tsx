@@ -18,6 +18,12 @@ import {
   getTelegramUserId,
 } from "@/components/TelegramInit";
 import { botUrl, botUsername, homeRegions } from "@/data/home";
+import {
+  formatHistorySum,
+  formatHistoryWhen,
+  loadOrderHistory,
+  type HistoryOrder,
+} from "@/lib/order-history";
 
 const PSN_KEY = "icity-psn-account";
 
@@ -66,11 +72,13 @@ export function Cabinet({ regionId = "tr", onFavorites }: Props) {
   const [psnOpen, setPsnOpen] = useState(true);
   const [copied, setCopied] = useState(false);
   const [view, setView] = useState<View>("main");
+  const [orders, setOrders] = useState<HistoryOrder[]>([]);
 
   useEffect(() => {
     setName(getTelegramDisplayName());
     setUserId(getTelegramUserId() ?? getTelegramUser()?.id);
     setPsn(loadPsn(regionId === "in" ? "in" : "tr"));
+    setOrders(loadOrderHistory());
   }, [regionId]);
 
   const letter = (name.trim()[0] ?? "?").toUpperCase();
@@ -98,22 +106,18 @@ export function Cabinet({ regionId = "tr", onFavorites }: Props) {
     window.setTimeout(() => setCopied(false), 1600);
   }
 
+  if (view === "history") {
+    return <HistoryView orders={orders} onBack={() => setView("main")} />;
+  }
+
   if (view !== "main") {
     return (
       <StubView
-        title={
-          view === "history"
-            ? "История покупок"
-            : view === "codes"
-              ? "Резервные коды"
-              : "Реферальная программа"
-        }
+        title={view === "codes" ? "Резервные коды" : "Реферальная программа"}
         text={
-          view === "history"
-            ? "Пока нет заказов — они появятся здесь после оплаты."
-            : view === "codes"
-              ? "Скоро можно будет сохранить резервные коды PSN. Пока это заглушка."
-              : "Скоро здесь будет статистика приглашений и начисления 3% с покупок друзей."
+          view === "codes"
+            ? "Скоро можно будет сохранить резервные коды PSN. Пока это заглушка."
+            : "Скоро здесь будет статистика приглашений и начисления 3% с покупок друзей."
         }
         onBack={() => setView("main")}
       />
@@ -321,7 +325,11 @@ export function Cabinet({ regionId = "tr", onFavorites }: Props) {
               </span>
             }
             title="История покупок"
-            subtitle="Все ваши заказы"
+            subtitle={
+              orders.length
+                ? `${orders.length} ${orderWord(orders.length)}`
+                : "Все ваши заказы"
+            }
             onClick={() => setView("history")}
           />
         </div>
@@ -397,6 +405,62 @@ function MenuRow({
       {body}
     </button>
   );
+}
+
+function HistoryView({
+  orders,
+  onBack,
+}: {
+  orders: HistoryOrder[];
+  onBack: () => void;
+}) {
+  return (
+    <div className="pt-2">
+      <button type="button" onClick={onBack} className="text-sm text-[#8a92a8]">
+        ← Назад
+      </button>
+      <h1 className="mt-4 text-xl font-semibold">История покупок</h1>
+      {orders.length === 0 ? (
+        <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-5 text-[#8a92a8]">
+          Пока нет заказов — они появятся здесь после оформления.
+        </p>
+      ) : (
+        <div className="mt-3 flex flex-col gap-2">
+          {orders.map((order) => (
+            <article
+              key={order.orderId}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold">Заказ №{order.orderId}</p>
+                <p className="shrink-0 text-sm font-semibold text-[#d4af6a]">
+                  {formatHistorySum(order.priceRub)}
+                </p>
+              </div>
+              <p className="mt-1 text-[13px] text-[#cfd3dc]">
+                {order.platform} · {order.denomination}
+              </p>
+              <p className="mt-0.5 text-[12px] text-[#8a92a8]">
+                {order.region} · {formatHistoryWhen(order.createdAt)}
+              </p>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function orderWord(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) {
+    return "заказ";
+  }
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return "заказа";
+  }
+  return "заказов";
 }
 
 function StubView({
