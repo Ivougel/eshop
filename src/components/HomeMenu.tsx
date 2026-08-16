@@ -132,7 +132,7 @@ function RegionCard({
 }
 
 const serviceIcons: Record<string, string> = {
-  xbox: "/icons/xbox.png",
+  xbox: "/icons/xbox.png?v=2",
   steam: "/icons/steam.png",
   playstation: "/icons/playstation.png",
   roblox: "/icons/roblox.png",
