@@ -133,11 +133,11 @@ function RegionCard({
 
 const serviceIcons: Record<string, string> = {
   xbox: "/icons/xbox.png?v=2",
-  steam: "/icons/steam.png",
-  playstation: "/icons/playstation.png",
-  roblox: "/icons/roblox.png",
-  apple: "/icons/apple.png",
-  ai: "/icons/ai.png",
+  steam: "/icons/steam.png?v=2",
+  playstation: "/icons/playstation.png?v=2",
+  roblox: "/icons/roblox.png?v=2",
+  apple: "/icons/apple.png?v=2",
+  ai: "/icons/ai.png?v=2",
 };
 
 function ServiceRow({
