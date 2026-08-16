@@ -131,6 +131,15 @@ function RegionCard({
   );
 }
 
+const serviceIcons: Record<string, string> = {
+  xbox: "/icons/xbox.png",
+  steam: "/icons/steam.png",
+  playstation: "/icons/playstation.png",
+  roblox: "/icons/roblox.png",
+  apple: "/icons/apple.png",
+  ai: "/icons/ai.png",
+};
+
 function ServiceRow({
   item,
   onSelect,
@@ -138,14 +147,7 @@ function ServiceRow({
   item: HomeService;
   onSelect: () => void;
 }) {
-  const iconWrap: Record<string, string> = {
-    xbox: "bg-[#107c10] text-white",
-    steam: "bg-[#1b2838] text-white",
-    playstation: "bg-[#00439c] text-white",
-    roblox: "bg-[#e2231a] text-white",
-    apple: "bg-gradient-to-br from-[#2ac9fa] to-[#0a7cff] text-white",
-    ai: "bg-white text-black",
-  };
+  const iconSrc = serviceIcons[item.icon];
 
   return (
     <button
@@ -153,11 +155,19 @@ function ServiceRow({
       onClick={onSelect}
       className="flex items-center gap-3.5 rounded-[18px] border border-white/[0.08] bg-white/[0.035] px-3.5 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
     >
-      <span
-        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[13px] ${iconWrap[item.icon] ?? "bg-[#2a2a2e]"}`}
-      >
-        <PlatformIcon icon={item.icon} className="h-7 w-7" />
-      </span>
+      {iconSrc ? (
+        <img
+          src={iconSrc}
+          alt=""
+          width={48}
+          height={48}
+          className="h-12 w-12 shrink-0 rounded-[13px] object-cover"
+        />
+      ) : (
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[13px] bg-[#2a2a2e]">
+          <PlatformIcon icon={item.icon} className="h-7 w-7" />
+        </span>
+      )}
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
           <span className="truncate text-[15px] font-semibold">{item.title}</span>
